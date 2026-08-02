@@ -3,7 +3,6 @@ import { auth } from "@/auth";
 import {
   exchangeCodeForShortLivedToken,
   exchangeForLongLivedToken,
-  listPagesWithInstagram,
   getInstagramUsername,
 } from "@/lib/instagram/graph-api";
 import { encryptToken } from "@/lib/crypto";
@@ -24,33 +23,24 @@ export async function GET(req: NextRequest) {
   try {
     const shortLived = await exchangeCodeForShortLivedToken(code);
     const longLived = await exchangeForLongLivedToken(shortLived.access_token);
-    const pages = await listPagesWithInstagram(longLived.access_token);
-
-    if (pages.length === 0) {
-      return NextResponse.redirect(new URL("/accounts?error=no_instagram_pages", req.url));
-    }
+    const igUserId = String(shortLived.user_id);
+    const username = await getInstagramUsername(igUserId, longLived.access_token);
 
     const supabase = createServiceClient();
     const expiresAt = new Date(Date.now() + longLived.expires_in * 1000).toISOString();
 
-    for (const page of pages) {
-      const igUserId = page.instagram_business_account!.id;
-      const username = await getInstagramUsername(igUserId, page.access_token);
-
-      await supabase
-        .from("accounts")
-        .upsert(
-          {
-            persona_name: username,
-            ig_username: username,
-            ig_business_account_id: igUserId,
-            fb_page_id: page.id,
-            access_token_encrypted: encryptToken(page.access_token),
-            token_expires_at: expiresAt,
-          },
-          { onConflict: "ig_business_account_id" },
-        );
-    }
+    await supabase
+      .from("accounts")
+      .upsert(
+        {
+          persona_name: username,
+          ig_username: username,
+          ig_business_account_id: igUserId,
+          access_token_encrypted: encryptToken(longLived.access_token),
+          token_expires_at: expiresAt,
+        },
+        { onConflict: "ig_business_account_id" },
+      );
 
     return NextResponse.redirect(new URL("/accounts?connected=1", req.url));
   } catch (err) {

@@ -7,7 +7,6 @@ create table if not exists accounts (
   persona_name text not null,
   ig_username text not null,
   ig_business_account_id text not null unique,
-  fb_page_id text not null,
   access_token_encrypted text not null,
   token_expires_at timestamptz not null,
   created_at timestamptz not null default now()

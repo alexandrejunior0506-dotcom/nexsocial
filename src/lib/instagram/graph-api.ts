@@ -1,7 +1,7 @@
 import "server-only";
 
 const GRAPH_VERSION = "v21.0";
-const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
+const GRAPH_BASE = `https://graph.instagram.com/${GRAPH_VERSION}`;
 
 export class InstagramApiError extends Error {
   constructor(
@@ -43,51 +43,72 @@ async function graphFetch<T>(
   return json as T;
 }
 
-/** Step 1 of OAuth: exchange the "code" from the Meta login redirect for a short-lived user token. */
+/** Step 1 of OAuth: exchange the "code" from the Instagram login redirect for a short-lived user token. */
 export async function exchangeCodeForShortLivedToken(code: string) {
-  return graphFetch<{ access_token: string; token_type: string; expires_in: number }>(
-    "/oauth/access_token",
-    {
-      client_id: process.env.META_APP_ID!,
-      client_secret: process.env.META_APP_SECRET!,
-      redirect_uri: process.env.META_REDIRECT_URI!,
-      code,
-    },
-  );
+  const body = new URLSearchParams({
+    client_id: process.env.INSTAGRAM_APP_ID!,
+    client_secret: process.env.INSTAGRAM_APP_SECRET!,
+    grant_type: "authorization_code",
+    redirect_uri: process.env.META_REDIRECT_URI!,
+    code,
+  });
+
+  const res = await fetch("https://api.instagram.com/oauth/access_token", {
+    method: "POST",
+    body,
+  });
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new InstagramApiError(
+      json?.error_message || `Instagram token exchange failed (${res.status})`,
+      res.status,
+      json,
+    );
+  }
+
+  return json as { access_token: string; user_id: number; permissions: string[] };
 }
 
 /** Step 2: exchange a short-lived user token for a long-lived one (~60 days). */
 export async function exchangeForLongLivedToken(shortLivedToken: string) {
-  return graphFetch<{ access_token: string; token_type: string; expires_in: number }>(
-    "/oauth/access_token",
-    {
-      grant_type: "fb_exchange_token",
-      client_id: process.env.META_APP_ID!,
-      client_secret: process.env.META_APP_SECRET!,
-      fb_exchange_token: shortLivedToken,
-    },
-  );
+  const url = new URL("https://graph.instagram.com/access_token");
+  url.searchParams.set("grant_type", "ig_exchange_token");
+  url.searchParams.set("client_secret", process.env.INSTAGRAM_APP_SECRET!);
+  url.searchParams.set("access_token", shortLivedToken);
+
+  const res = await fetch(url.toString());
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new InstagramApiError(
+      json?.error?.message || `Instagram token exchange failed (${res.status})`,
+      res.status,
+      json,
+    );
+  }
+
+  return json as { access_token: string; token_type: string; expires_in: number };
 }
 
 /** Refreshes a long-lived token before it expires (must be called with a still-valid token). */
 export async function refreshLongLivedToken(longLivedToken: string) {
-  return exchangeForLongLivedToken(longLivedToken);
-}
+  const url = new URL("https://graph.instagram.com/refresh_access_token");
+  url.searchParams.set("grant_type", "ig_refresh_token");
+  url.searchParams.set("access_token", longLivedToken);
 
-export interface FacebookPageWithIg {
-  id: string;
-  name: string;
-  access_token: string;
-  instagram_business_account?: { id: string };
-}
+  const res = await fetch(url.toString());
+  const json = await res.json();
 
-/** Lists the Facebook Pages the user manages, including linked Instagram Business accounts. */
-export async function listPagesWithInstagram(userAccessToken: string) {
-  const data = await graphFetch<{ data: FacebookPageWithIg[] }>("/me/accounts", {
-    access_token: userAccessToken,
-    fields: "id,name,access_token,instagram_business_account",
-  });
-  return data.data.filter((page) => !!page.instagram_business_account);
+  if (!res.ok) {
+    throw new InstagramApiError(
+      json?.error?.message || `Instagram token refresh failed (${res.status})`,
+      res.status,
+      json,
+    );
+  }
+
+  return json as { access_token: string; token_type: string; expires_in: number };
 }
 
 export async function getInstagramUsername(igUserId: string, accessToken: string) {
