@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/cron/publish", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/check-containers", "schedule": "*/3 * * * *" },
+    { "path": "/api/cron/refresh-tokens", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/sync-analytics", "schedule": "0 */6 * * *" }
+  ]
+}
