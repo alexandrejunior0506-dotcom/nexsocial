@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 
 interface Account {
@@ -12,6 +13,17 @@ interface Account {
 }
 
 export default function AccountsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccountsContent />
+    </Suspense>
+  );
+}
+
+function AccountsContent() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+  const detail = searchParams.get("detail");
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -60,6 +72,13 @@ export default function AccountsPage() {
           Conectar conta do Instagram
         </a>
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-md border border-red-900 bg-red-950/50 p-4 text-sm text-red-300">
+          <p className="font-medium">Falha ao conectar: {error}</p>
+          {detail && <p className="mt-1 text-red-400">{detail}</p>}
+        </div>
+      )}
 
       {loading && <p className="mt-6 text-neutral-400">Carregando...</p>}
 

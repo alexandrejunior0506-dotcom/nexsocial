@@ -45,6 +45,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/accounts?connected=1", req.url));
   } catch (err) {
     console.error("Instagram OAuth callback failed", err);
-    return NextResponse.redirect(new URL("/accounts?error=oauth_failed", req.url));
+    const detail =
+      err instanceof Error ? err.message : typeof err === "string" ? err : "erro_desconhecido";
+    const url = new URL("/accounts", req.url);
+    url.searchParams.set("error", "oauth_failed");
+    url.searchParams.set("detail", detail.slice(0, 300));
+    return NextResponse.redirect(url);
   }
 }
