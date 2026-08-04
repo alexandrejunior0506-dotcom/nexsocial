@@ -67,7 +67,7 @@ function AccountsContent() {
         <h1 className="text-2xl font-semibold">Contas conectadas</h1>
         <a
           href="/api/instagram/oauth"
-          className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black"
+          className="nex-gradient-bg rounded-md px-4 py-2 text-sm font-medium text-white"
         >
           Conectar conta do Instagram
         </a>
@@ -93,14 +93,14 @@ function AccountsContent() {
         {accounts.map((acc) => (
           <div
             key={acc.id}
-            className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900 p-4"
+            className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
           >
             <div>
               {editingId === acc.id ? (
                 <input
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-sm text-white"
+                  className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-1 text-sm text-white"
                 />
               ) : (
                 <p className="font-medium">{acc.persona_name}</p>
@@ -114,7 +114,7 @@ function AccountsContent() {
               {editingId === acc.id ? (
                 <button
                   onClick={() => saveRename(acc.id)}
-                  className="rounded-md bg-white px-3 py-1 text-sm text-black"
+                  className="nex-gradient-bg rounded-md px-3 py-1 text-sm text-white"
                 >
                   Salvar
                 </button>
@@ -124,14 +124,14 @@ function AccountsContent() {
                     setEditingId(acc.id);
                     setEditValue(acc.persona_name);
                   }}
-                  className="rounded-md border border-neutral-700 px-3 py-1 text-sm"
+                  className="rounded-md border border-[var(--border)] px-3 py-1 text-sm hover:bg-[var(--surface-hover)]"
                 >
                   Renomear
                 </button>
               )}
               <button
                 onClick={() => removeAccount(acc.id)}
-                className="rounded-md border border-red-900 px-3 py-1 text-sm text-red-400"
+                className="rounded-md border border-red-900/60 px-3 py-1 text-sm text-red-400 hover:bg-red-950/40"
               >
                 Remover
               </button>

@@ -22,17 +22,17 @@ export default async function DashboardPage() {
       <h1 className="text-2xl font-semibold">Dashboard</h1>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-          <p className="text-sm text-neutral-400">Contas conectadas</p>
-          <p className="mt-1 text-3xl font-semibold">{accounts?.length ?? 0}</p>
-          <Link href="/accounts" className="mt-2 inline-block text-sm text-neutral-400 underline">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
+          <p className="text-sm text-[var(--muted)]">Contas conectadas</p>
+          <p className="nex-gradient-text mt-1 text-3xl font-semibold">{accounts?.length ?? 0}</p>
+          <Link href="/accounts" className="mt-2 inline-block text-sm text-sky-400 hover:text-sky-300">
             Gerenciar contas
           </Link>
         </div>
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-          <p className="text-sm text-neutral-400">Próximos posts agendados</p>
-          <p className="mt-1 text-3xl font-semibold">{upcoming?.length ?? 0}</p>
-          <Link href="/calendar" className="mt-2 inline-block text-sm text-neutral-400 underline">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
+          <p className="text-sm text-[var(--muted)]">Próximos posts agendados</p>
+          <p className="nex-gradient-text mt-1 text-3xl font-semibold">{upcoming?.length ?? 0}</p>
+          <Link href="/calendar" className="mt-2 inline-block text-sm text-sky-400 hover:text-sky-300">
             Ver calendário
           </Link>
         </div>
@@ -41,12 +41,12 @@ export default async function DashboardPage() {
       <h2 className="mt-8 text-lg font-medium">Próximos agendamentos</h2>
       <div className="mt-3 space-y-2">
         {(upcoming ?? []).length === 0 && (
-          <p className="text-neutral-400">Nada agendado. Crie um novo post.</p>
+          <p className="text-[var(--muted)]">Nada agendado. Crie um novo post.</p>
         )}
         {(upcoming ?? []).map((post) => (
           <div
             key={post.id}
-            className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900 p-4"
+            className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
           >
             <div>
               <p className="font-medium">

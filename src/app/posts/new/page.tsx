@@ -84,7 +84,7 @@ export default function NewPostPage() {
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             required
-            className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-white"
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white"
           >
             <option value="" disabled>
               Selecione uma conta
@@ -114,7 +114,7 @@ export default function NewPostPage() {
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             rows={4}
-            className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-white"
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white"
           />
         </div>
 
@@ -125,7 +125,7 @@ export default function NewPostPage() {
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
             required
-            className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-white"
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white"
           />
         </div>
 
@@ -134,7 +134,7 @@ export default function NewPostPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-white px-4 py-2 font-medium text-black disabled:opacity-50"
+          className="nex-gradient-bg rounded-md px-4 py-2 font-medium text-white disabled:opacity-50"
         >
           {submitting ? "Enviando..." : "Agendar post"}
         </button>

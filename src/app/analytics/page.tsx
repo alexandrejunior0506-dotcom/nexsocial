@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
         <select
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
-          className="rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white"
+          className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-white"
         >
           {accounts.map((acc) => (
             <option key={acc.id} value={acc.id}>
@@ -92,18 +92,18 @@ export default function AnalyticsPage() {
 
       {!loading && (
         <>
-          <div className="mt-6 h-80 rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+          <div className="mt-6 h-80 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={snapshots}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
-                <XAxis dataKey="date" stroke="#a3a3a3" fontSize={12} />
-                <YAxis stroke="#a3a3a3" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1b2a42" />
+                <XAxis dataKey="date" stroke="#8b98ad" fontSize={12} />
+                <YAxis stroke="#8b98ad" fontSize={12} />
                 <Tooltip
-                  contentStyle={{ background: "#171717", border: "1px solid #262626" }}
+                  contentStyle={{ background: "#0b1424", border: "1px solid #1b2a42" }}
                 />
                 <Legend />
-                <Line type="monotone" dataKey="followers_count" name="Seguidores" stroke="#22c55e" />
-                <Line type="monotone" dataKey="reach" name="Alcance" stroke="#3b82f6" />
+                <Line type="monotone" dataKey="followers_count" name="Seguidores" stroke="#38bdf8" />
+                <Line type="monotone" dataKey="reach" name="Alcance" stroke="#1d4ed8" />
                 <Line type="monotone" dataKey="profile_views" name="Visitas ao perfil" stroke="#eab308" />
               </LineChart>
             </ResponsiveContainer>
@@ -117,7 +117,7 @@ export default function AnalyticsPage() {
               return (
                 <div
                   key={post.id}
-                  className="rounded-lg border border-neutral-800 bg-neutral-900 p-4"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
                 >
                   <p className="line-clamp-1 text-sm text-neutral-300">{post.caption}</p>
                   <p className="mt-1 text-xs text-neutral-600">

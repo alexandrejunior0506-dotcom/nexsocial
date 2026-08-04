@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 
@@ -34,13 +35,16 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-xl border border-neutral-800 bg-neutral-900 p-8"
+        className="w-full max-w-sm space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8"
       >
-        <h1 className="text-xl font-semibold text-white">NexSocial</h1>
-        <p className="text-sm text-neutral-400">Entre para gerenciar seus agendamentos.</p>
+        <Image src="/logo-icon.jpg" alt="NexSocial" width={48} height={48} className="rounded-lg" />
+        <h1 className="text-xl font-semibold text-white">
+          Nex<span className="nex-gradient-text">Social</span>
+        </h1>
+        <p className="text-sm text-[var(--muted)]">Entre para gerenciar seus agendamentos.</p>
 
         <div className="space-y-1">
           <label className="text-sm text-neutral-300">Email</label>
@@ -49,7 +53,7 @@ function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-white outline-none focus:border-neutral-500"
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-white outline-none focus:border-sky-500"
           />
         </div>
 
@@ -60,7 +64,7 @@ function LoginForm() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-white outline-none focus:border-neutral-500"
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-white outline-none focus:border-sky-500"
           />
         </div>
 
@@ -69,7 +73,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-white py-2 font-medium text-black disabled:opacity-50"
+          className="nex-gradient-bg w-full rounded-md py-2 font-medium text-white disabled:opacity-50"
         >
           {loading ? "Entrando..." : "Entrar"}
         </button>

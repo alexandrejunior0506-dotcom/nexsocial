@@ -69,7 +69,7 @@ export default function CalendarPage() {
         {posts.map((post) => (
           <div
             key={post.id}
-            className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900 p-4"
+            className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
           >
             <div className="flex-1">
               <div className="flex items-center gap-3">
@@ -91,7 +91,7 @@ export default function CalendarPage() {
             {(post.status === "scheduled" || post.status === "failed") && (
               <button
                 onClick={() => cancelPost(post.id)}
-                className="rounded-md border border-red-900 px-3 py-1 text-sm text-red-400"
+                className="rounded-md border border-red-900/60 px-3 py-1 text-sm text-red-400 hover:bg-red-950/40"
               >
                 Cancelar
               </button>
