@@ -39,6 +39,10 @@ export async function GET(req: NextRequest) {
           ig_business_account_id: igUserId,
           access_token_encrypted: encryptToken(longLived.access_token),
           token_expires_at: expiresAt,
+          profile_picture_url: me.profile_picture_url ?? null,
+          status: "active",
+          last_checked_at: new Date().toISOString(),
+          last_error: null,
         },
         { onConflict: "ig_business_account_id" },
       );

@@ -113,9 +113,9 @@ export async function refreshLongLivedToken(longLivedToken: string) {
 
 /** Fetches the authenticated account's own IG-scoped user id + username via the recommended "/me" alias. */
 export async function getMe(accessToken: string) {
-  return graphFetch<{ user_id: string; username: string }>("/me", {
+  return graphFetch<{ user_id: string; username: string; profile_picture_url?: string }>("/me", {
     access_token: accessToken,
-    fields: "user_id,username",
+    fields: "user_id,username,profile_picture_url",
   });
 }
 

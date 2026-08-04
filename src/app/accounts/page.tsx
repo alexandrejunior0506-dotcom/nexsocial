@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { RowSkeleton } from "@/components/skeleton";
@@ -11,6 +12,10 @@ interface Account {
   persona_name: string;
   ig_username: string;
   token_expires_at: string;
+  profile_picture_url: string | null;
+  status: "active" | "error";
+  last_checked_at: string | null;
+  last_error: string | null;
   created_at: string;
 }
 
@@ -31,6 +36,7 @@ function AccountsContent() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [checkingId, setCheckingId] = useState<string | null>(null);
 
   async function load() {
     const res = await fetch("/api/accounts");
@@ -72,6 +78,22 @@ function AccountsContent() {
     load();
   }
 
+  async function checkAccount(id: string) {
+    setCheckingId(id);
+    try {
+      const res = await fetch(`/api/accounts/${id}/check`, { method: "POST" });
+      const data = await res.json();
+      if (data.error) {
+        showToast(`Conta com problema: ${data.error}`, "error");
+      } else {
+        showToast("Conta ativa e funcionando normalmente.");
+      }
+      load();
+    } finally {
+      setCheckingId(null);
+    }
+  }
+
   return (
     <AppShell>
       <div className="flex items-center justify-between">
@@ -99,26 +121,68 @@ function AccountsContent() {
       )}
 
       <div className="mt-6 space-y-3">
-        {accounts.map((acc) => (
+        {accounts.map((acc, index) => (
           <div
             key={acc.id}
             className="nex-card flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
           >
-            <div>
-              {editingId === acc.id ? (
-                <input
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-1 text-sm text-white"
+            <div className="flex items-center gap-4">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--surface-hover)] text-xs font-medium text-[var(--muted)]">
+                {index + 1}
+              </div>
+
+              {acc.profile_picture_url ? (
+                <Image
+                  src={acc.profile_picture_url}
+                  alt={acc.ig_username}
+                  width={44}
+                  height={44}
+                  unoptimized
+                  className="h-11 w-11 shrink-0 rounded-full object-cover"
                 />
               ) : (
-                <p className="font-medium">{acc.persona_name}</p>
+                <div className="nex-gradient-bg flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-semibold text-white">
+                  {acc.persona_name.charAt(0).toUpperCase()}
+                </div>
               )}
-              <p className="text-sm text-neutral-500">@{acc.ig_username}</p>
-              <p className="text-xs text-neutral-600">
-                token expira em {new Date(acc.token_expires_at).toLocaleDateString("pt-BR")}
-              </p>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  {editingId === acc.id ? (
+                    <input
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2 py-1 text-sm text-white"
+                    />
+                  ) : (
+                    <p className="font-medium">{acc.persona_name}</p>
+                  )}
+
+                  {acc.status === "active" ? (
+                    <span className="flex items-center gap-1 rounded-full bg-green-950/50 px-2 py-0.5 text-xs text-green-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      Ativa
+                    </span>
+                  ) : (
+                    <span
+                      title={acc.last_error ?? "Verifique a conta"}
+                      className="flex items-center gap-1 rounded-full bg-red-950/50 px-2 py-0.5 text-xs text-red-400"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                      Verificar conta
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-neutral-500">@{acc.ig_username}</p>
+                <p className="text-xs text-neutral-600">
+                  token expira em {new Date(acc.token_expires_at).toLocaleDateString("pt-BR")}
+                </p>
+                {acc.status === "error" && acc.last_error && (
+                  <p className="mt-1 max-w-xs text-xs text-red-400">{acc.last_error}</p>
+                )}
+              </div>
             </div>
+
             <div className="flex gap-2">
               {editingId === acc.id ? (
                 <button
@@ -128,15 +192,24 @@ function AccountsContent() {
                   Salvar
                 </button>
               ) : (
-                <button
-                  onClick={() => {
-                    setEditingId(acc.id);
-                    setEditValue(acc.persona_name);
-                  }}
-                  className="rounded-md border border-[var(--border)] px-3 py-1 text-sm hover:bg-[var(--surface-hover)]"
-                >
-                  Renomear
-                </button>
+                <>
+                  <button
+                    onClick={() => checkAccount(acc.id)}
+                    disabled={checkingId === acc.id}
+                    className="rounded-md border border-[var(--border)] px-3 py-1 text-sm hover:bg-[var(--surface-hover)] disabled:opacity-50"
+                  >
+                    {checkingId === acc.id ? "Verificando..." : "Verificar agora"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(acc.id);
+                      setEditValue(acc.persona_name);
+                    }}
+                    className="rounded-md border border-[var(--border)] px-3 py-1 text-sm hover:bg-[var(--surface-hover)]"
+                  >
+                    Renomear
+                  </button>
+                </>
               )}
               <button
                 onClick={() => removeAccount(acc.id)}

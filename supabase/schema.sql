@@ -9,6 +9,10 @@ create table if not exists accounts (
   ig_business_account_id text not null unique,
   access_token_encrypted text not null,
   token_expires_at timestamptz not null,
+  profile_picture_url text,
+  status text not null default 'active' check (status in ('active', 'error')),
+  last_checked_at timestamptz,
+  last_error text,
   created_at timestamptz not null default now()
 );
 
