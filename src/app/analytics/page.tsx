@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import { AppShell } from "@/components/app-shell";
+import { Skeleton } from "@/components/skeleton";
 
 interface Account {
   id: string;
@@ -88,7 +89,13 @@ export default function AnalyticsPage() {
         </select>
       </div>
 
-      {loading && <p className="mt-6 text-neutral-400">Carregando...</p>}
+      {loading && (
+        <div className="mt-6 space-y-3">
+          <Skeleton className="h-80 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      )}
 
       {!loading && (
         <>
@@ -117,7 +124,7 @@ export default function AnalyticsPage() {
               return (
                 <div
                   key={post.id}
-                  className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+                  className="nex-card rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
                 >
                   <p className="line-clamp-1 text-sm text-neutral-300">{post.caption}</p>
                   <p className="mt-1 text-xs text-neutral-600">

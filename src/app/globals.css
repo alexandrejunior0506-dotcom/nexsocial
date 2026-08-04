@@ -34,3 +34,88 @@ body {
 .nex-gradient-bg {
   background: linear-gradient(90deg, var(--accent-from), var(--accent-to));
 }
+
+.nex-gradient-bg {
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.nex-gradient-bg:hover {
+  filter: brightness(1.12);
+}
+
+.nex-gradient-bg:active {
+  transform: scale(0.98);
+}
+
+a,
+button {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.nex-card {
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nex-card:hover {
+  border-color: var(--accent-from);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), 0 8px 24px -8px rgba(29, 78, 216, 0.35);
+}
+
+main {
+  animation: nex-fade-in 0.25s ease;
+}
+
+@keyframes nex-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nex-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toast-in {
+  animation: nex-toast-in 0.2s ease;
+}
+
+@keyframes nex-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: nex-fade 0.15s ease;
+}
+
+@keyframes nex-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: nex-scale-in 0.18s ease;
+}

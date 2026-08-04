@@ -76,7 +76,7 @@ export default async function DashboardPage() {
         {(upcoming ?? []).map((post) => (
           <div
             key={post.id}
-            className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+            className="nex-card flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
           >
             <div className="flex items-center gap-3">
               <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[post.status] ?? "bg-neutral-500"}`} />
@@ -116,7 +116,7 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
+    <div className="nex-card rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--muted)]">{label}</p>
         <span className="nex-gradient-text">{icon}</span>

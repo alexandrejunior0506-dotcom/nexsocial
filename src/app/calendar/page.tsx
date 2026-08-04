@@ -15,6 +15,8 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppShell } from "@/components/app-shell";
+import { Skeleton } from "@/components/skeleton";
+import { useUi } from "@/components/ui-provider";
 
 interface Post {
   id: string;
@@ -46,6 +48,7 @@ const STATUS_DOT: Record<Post["status"], string> = {
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export default function CalendarPage() {
+  const { showToast, confirm } = useUi();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(() => new Date());
@@ -68,8 +71,10 @@ export default function CalendarPage() {
   }, []);
 
   async function cancelPost(id: string) {
-    if (!confirm("Cancelar este post agendado?")) return;
+    const ok = await confirm("Cancelar este post agendado?");
+    if (!ok) return;
     await fetch(`/api/posts/${id}`, { method: "DELETE" });
+    showToast("Post cancelado.");
     load();
   }
 
@@ -119,7 +124,13 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {loading && <p className="mt-6 text-[var(--muted)]">Carregando...</p>}
+      {loading && (
+        <div className="mt-6 grid grid-cols-7 gap-1">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <Skeleton key={i} className="h-28" />
+          ))}
+        </div>
+      )}
 
       {!loading && (
         <div className="mt-6 overflow-hidden rounded-xl border border-[var(--border)]">
@@ -195,7 +206,7 @@ export default function CalendarPage() {
             {selectedPosts.map((post) => (
               <div
                 key={post.id}
-                className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+                className="nex-card flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3">

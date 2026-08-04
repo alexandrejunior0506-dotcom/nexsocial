@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { RowSkeleton } from "@/components/skeleton";
+import { useUi } from "@/components/ui-provider";
 
 interface Account {
   id: string;
@@ -24,6 +26,7 @@ function AccountsContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const detail = searchParams.get("detail");
+  const { showToast, confirm } = useUi();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,6 +48,11 @@ function AccountsContent() {
       });
   }, []);
 
+  useEffect(() => {
+    if (error) showToast(`Falha ao conectar: ${detail || error}`, "error");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function saveRename(id: string) {
     await fetch("/api/accounts", {
       method: "PATCH",
@@ -52,12 +60,15 @@ function AccountsContent() {
       body: JSON.stringify({ id, persona_name: editValue }),
     });
     setEditingId(null);
+    showToast("Nome atualizado.");
     load();
   }
 
   async function removeAccount(id: string) {
-    if (!confirm("Desconectar esta conta do NexSocial?")) return;
+    const ok = await confirm("Desconectar esta conta do NexSocial?");
+    if (!ok) return;
     await fetch(`/api/accounts?id=${id}`, { method: "DELETE" });
+    showToast("Conta desconectada.");
     load();
   }
 
@@ -73,17 +84,15 @@ function AccountsContent() {
         </a>
       </div>
 
-      {error && (
-        <div className="mt-4 rounded-md border border-red-900 bg-red-950/50 p-4 text-sm text-red-300">
-          <p className="font-medium">Falha ao conectar: {error}</p>
-          {detail && <p className="mt-1 text-red-400">{detail}</p>}
+      {loading && (
+        <div className="mt-6 space-y-3">
+          <RowSkeleton />
+          <RowSkeleton />
         </div>
       )}
 
-      {loading && <p className="mt-6 text-neutral-400">Carregando...</p>}
-
       {!loading && accounts.length === 0 && (
-        <p className="mt-6 text-neutral-400">
+        <p className="mt-6 rounded-xl border border-dashed border-[var(--border)] p-6 text-center text-[var(--muted)]">
           Nenhuma conta conectada ainda. Clique em &quot;Conectar conta do Instagram&quot; para
           vincular sua primeira conta Business/Creator.
         </p>
@@ -93,7 +102,7 @@ function AccountsContent() {
         {accounts.map((acc) => (
           <div
             key={acc.id}
-            className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+            className="nex-card flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
           >
             <div>
               {editingId === acc.id ? (
