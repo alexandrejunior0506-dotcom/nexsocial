@@ -124,7 +124,8 @@ function AccountsContent() {
         {accounts.map((acc, index) => (
           <div
             key={acc.id}
-            className="nex-card flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+            style={{ animationDelay: `${index * 0.06}s` }}
+            className="nex-card nex-rise-in flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
           >
             <div className="flex items-center gap-4">
               <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--surface-hover)] text-xs font-medium text-[var(--muted)]">
@@ -160,7 +161,7 @@ function AccountsContent() {
 
                   {acc.status === "active" ? (
                     <span className="flex items-center gap-1 rounded-full bg-green-950/50 px-2 py-0.5 text-xs text-green-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      <span className="nex-pulse-dot h-1.5 w-1.5 rounded-full bg-green-500" />
                       Ativa
                     </span>
                   ) : (

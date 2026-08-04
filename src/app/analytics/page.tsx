@@ -119,12 +119,13 @@ export default function AnalyticsPage() {
           <h2 className="mt-8 text-lg font-medium">Posts publicados</h2>
           <div className="mt-3 space-y-2">
             {posts.length === 0 && <p className="text-neutral-400">Nenhum post publicado ainda.</p>}
-            {posts.map((post) => {
+            {posts.map((post, i) => {
               const latest = post.post_analytics?.[0];
               return (
                 <div
                   key={post.id}
-                  className="nex-card rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+                  style={{ animationDelay: `${i * 0.05}s` }}
+                  className="nex-card nex-rise-in rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
                 >
                   <p className="line-clamp-1 text-sm text-neutral-300">{post.caption}</p>
                   <p className="mt-1 text-xs text-neutral-600">

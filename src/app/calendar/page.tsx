@@ -203,10 +203,11 @@ export default function CalendarPage() {
             </button>
           </div>
           <div className="mt-3 space-y-3">
-            {selectedPosts.map((post) => (
+            {selectedPosts.map((post, i) => (
               <div
                 key={post.id}
-                className="nex-card flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+                style={{ animationDelay: `${i * 0.05}s` }}
+                className="nex-card nex-rise-in flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
