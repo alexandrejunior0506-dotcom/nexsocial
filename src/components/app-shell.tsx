@@ -7,8 +7,8 @@ import { signOutAction } from "@/lib/actions/sign-out";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
+  { href: "/posts/new", label: "Agendar post", icon: PlusIcon },
   { href: "/calendar", label: "Calendário", icon: CalendarIcon },
-  { href: "/posts/new", label: "Novo post", icon: PlusIcon },
   { href: "/accounts", label: "Contas", icon: UsersIcon },
   { href: "/analytics", label: "Analytics", icon: ChartIcon },
 ];
@@ -17,42 +17,45 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <aside className="flex w-60 flex-col border-r border-[var(--border)] bg-[var(--surface)] p-4">
-        <div className="mb-8 flex items-center gap-2 px-2">
-          <Image src="/logo-icon.jpg" alt="NexSocial" width={32} height={32} className="rounded-md" />
-          <span className="text-lg font-semibold">
-            Nex<span className="nex-gradient-text">Social</span>
-          </span>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-6">
+          <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
+            <Image src="/logo-icon.jpg" alt="NexSocial" width={30} height={30} className="rounded-md" />
+            <span className="text-lg font-semibold">
+              Nex<span className="nex-gradient-text">Social</span>
+            </span>
+          </Link>
+
+          <nav className="flex flex-1 items-center gap-1">
+            {NAV_ITEMS.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex flex-col items-center gap-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${
+                    active
+                      ? "text-sky-400"
+                      : "text-[var(--muted)] hover:text-white"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
+                  {active && <span className="mt-0.5 h-0.5 w-6 rounded-full nex-gradient-bg" />}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <form action={signOutAction} className="shrink-0">
+            <button className="rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--muted)] hover:border-red-900/60 hover:text-red-400">
+              Sair
+            </button>
+          </form>
         </div>
-
-        <nav className="flex flex-1 flex-col gap-1">
-          {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                  active
-                    ? "nex-gradient-bg text-white"
-                    : "text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-white"
-                }`}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <form action={signOutAction}>
-          <button className="w-full rounded-md px-3 py-2 text-left text-sm text-[var(--muted)] hover:text-white">
-            Sair
-          </button>
-        </form>
-      </aside>
-      <main className="flex-1 p-8">{children}</main>
+      </header>
+      <main className="mx-auto max-w-7xl p-8">{children}</main>
     </div>
   );
 }
