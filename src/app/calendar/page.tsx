@@ -15,6 +15,7 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppShell } from "@/components/app-shell";
+import { DateTimePicker } from "@/components/date-time-picker";
 import { Skeleton } from "@/components/skeleton";
 import { useUi } from "@/components/ui-provider";
 
@@ -46,6 +47,7 @@ const STATUS_DOT: Record<Post["status"], string> = {
 };
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const EDITABLE_STATUSES: Post["status"][] = ["scheduled", "failed", "draft"];
 
 export default function CalendarPage() {
   const { showToast, confirm } = useUi();
@@ -53,6 +55,10 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editCaption, setEditCaption] = useState("");
+  const [editScheduledAt, setEditScheduledAt] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function load() {
     const res = await fetch("/api/posts");
@@ -76,6 +82,36 @@ export default function CalendarPage() {
     await fetch(`/api/posts/${id}`, { method: "DELETE" });
     showToast("Post cancelado.");
     load();
+  }
+
+  function openEdit(post: Post) {
+    setEditingPost(post);
+    setEditCaption(post.caption);
+    setEditScheduledAt(format(new Date(post.scheduled_at), "yyyy-MM-dd'T'HH:mm"));
+  }
+
+  async function saveEdit() {
+    if (!editingPost) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/posts/${editingPost.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caption: editCaption,
+          scheduled_at: new Date(editScheduledAt).toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      showToast("Post atualizado.");
+      setEditingPost(null);
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao salvar", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const days = useMemo(() => {
@@ -147,7 +183,7 @@ export default function CalendarPage() {
               const dayPosts = postsByDay.get(key) ?? [];
               const inMonth = isSameMonth(day, month);
               return (
-                <button
+                <div
                   key={key}
                   onClick={() => setSelectedDay(dayPosts.length ? key : null)}
                   className={`flex min-h-28 flex-col gap-1 border-b border-r border-[var(--border)] p-2 text-left align-top last:border-r-0 ${
@@ -167,22 +203,27 @@ export default function CalendarPage() {
                   </span>
                   <div className="flex flex-col gap-1">
                     {dayPosts.slice(0, 3).map((post) => (
-                      <div
+                      <button
                         key={post.id}
-                        className="flex items-center gap-1 truncate rounded bg-[var(--surface)] px-1.5 py-0.5 text-[11px] text-neutral-300"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (EDITABLE_STATUSES.includes(post.status)) openEdit(post);
+                          else setSelectedDay(key);
+                        }}
+                        className="flex items-center gap-1 truncate rounded bg-[var(--surface)] px-1.5 py-0.5 text-left text-[11px] text-neutral-300 hover:bg-[var(--surface-hover)]"
                       >
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[post.status]}`} />
                         <span className="truncate">
                           {format(new Date(post.scheduled_at), "HH:mm")} ·{" "}
                           {post.accounts?.persona_name ?? "?"}
                         </span>
-                      </div>
+                      </button>
                     ))}
                     {dayPosts.length > 3 && (
                       <span className="text-[11px] text-[var(--muted)]">+{dayPosts.length - 3} mais</span>
                     )}
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -227,13 +268,21 @@ export default function CalendarPage() {
                     <p className="mt-1 text-xs text-red-400">{post.error_message}</p>
                   )}
                 </div>
-                {(post.status === "scheduled" || post.status === "failed") && (
-                  <button
-                    onClick={() => cancelPost(post.id)}
-                    className="rounded-md border border-red-900/60 px-3 py-1 text-sm text-red-400 hover:bg-red-950/40"
-                  >
-                    Cancelar
-                  </button>
+                {EDITABLE_STATUSES.includes(post.status) && (
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      onClick={() => openEdit(post)}
+                      className="rounded-md border border-[var(--border)] px-3 py-1 text-sm hover:bg-[var(--surface-hover)]"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => cancelPost(post.id)}
+                      className="rounded-md border border-red-900/60 px-3 py-1 text-sm text-red-400 hover:bg-red-950/40"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
@@ -243,6 +292,60 @@ export default function CalendarPage() {
 
       {!loading && posts.length === 0 && (
         <p className="mt-6 text-[var(--muted)]">Nenhum post agendado ainda.</p>
+      )}
+
+      {editingPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Editar post</h3>
+              <button
+                onClick={() => setEditingPost(null)}
+                className="text-sm text-[var(--muted)] hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-neutral-500">
+              {editingPost.accounts?.persona_name ?? "Conta removida"}
+            </p>
+
+            <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border)] bg-black">
+              <video src={editingPost.video_url} controls className="max-h-56 w-full object-contain" />
+            </div>
+
+            <div className="mt-4 space-y-1">
+              <label className="text-sm text-neutral-300">Legenda</label>
+              <textarea
+                value={editCaption}
+                onChange={(e) => setEditCaption(e.target.value)}
+                rows={4}
+                className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-white outline-none focus:border-sky-500"
+              />
+            </div>
+
+            <div className="mt-4 space-y-1">
+              <label className="text-sm text-neutral-300">Data e hora</label>
+              <DateTimePicker value={editScheduledAt} onChange={setEditScheduledAt} />
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setEditingPost(null)}
+                className="rounded-md border border-[var(--border)] px-4 py-2 text-sm hover:bg-[var(--surface-hover)]"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={saving}
+                className="nex-gradient-bg rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {saving ? "Salvando..." : "Salvar alterações"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </AppShell>
   );

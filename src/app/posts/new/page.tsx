@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { DateTimePicker } from "@/components/date-time-picker";
 import { useUi } from "@/components/ui-provider";
 
 interface Account {
@@ -208,13 +209,7 @@ export default function NewPostPage() {
 
           <div className="space-y-1">
             <label className="text-sm text-neutral-300">Data e hora do agendamento</label>
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-              required
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white outline-none focus:border-sky-500"
-            />
+            <DateTimePicker value={scheduledAt} onChange={setScheduledAt} />
           </div>
 
           {submitting && (
