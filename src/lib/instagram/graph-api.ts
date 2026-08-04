@@ -111,12 +111,12 @@ export async function refreshLongLivedToken(longLivedToken: string) {
   return json as { access_token: string; token_type: string; expires_in: number };
 }
 
-export async function getInstagramUsername(igUserId: string, accessToken: string) {
-  const data = await graphFetch<{ username: string }>(`/${igUserId}`, {
+/** Fetches the authenticated account's own IG-scoped user id + username via the recommended "/me" alias. */
+export async function getMe(accessToken: string) {
+  return graphFetch<{ user_id: string; username: string }>("/me", {
     access_token: accessToken,
-    fields: "username",
+    fields: "user_id,username",
   });
-  return data.username;
 }
 
 /** Creates a Reels media container. Returns the container id to be polled and then published. */

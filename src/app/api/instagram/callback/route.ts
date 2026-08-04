@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import {
   exchangeCodeForShortLivedToken,
   exchangeForLongLivedToken,
-  getInstagramUsername,
+  getMe,
 } from "@/lib/instagram/graph-api";
 import { encryptToken } from "@/lib/crypto";
 import { createServiceClient } from "@/lib/supabase/server";
@@ -23,8 +23,9 @@ export async function GET(req: NextRequest) {
   try {
     const shortLived = await exchangeCodeForShortLivedToken(code);
     const longLived = await exchangeForLongLivedToken(shortLived.access_token);
-    const igUserId = String(shortLived.user_id);
-    const username = await getInstagramUsername(igUserId, longLived.access_token);
+    const me = await getMe(longLived.access_token);
+    const igUserId = me.user_id;
+    const username = me.username;
 
     const supabase = createServiceClient();
     const expiresAt = new Date(Date.now() + longLived.expires_in * 1000).toISOString();
