@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/crypto";
 import { getContainerStatus, publishContainer } from "@/lib/instagram/graph-api";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
+import { mapWithConcurrency } from "@/lib/concurrency";
 
 export const maxDuration = 60;
 
@@ -23,16 +24,14 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const results = [];
-
-  for (const post of processingPosts ?? []) {
+  const results = await mapWithConcurrency(processingPosts ?? [], 8, async (post) => {
     const account = post.accounts as unknown as {
       id: string;
       ig_business_account_id: string;
       access_token_encrypted: string;
     } | null;
 
-    if (!account || !post.ig_container_id) continue;
+    if (!account || !post.ig_container_id) return { postId: post.id, status: "skipped" };
 
     try {
       const accessToken = decryptToken(account.access_token_encrypted);
@@ -48,22 +47,22 @@ export async function GET(req: NextRequest) {
           .from("posts")
           .update({ status: "published", ig_media_id: mediaId, published_at: new Date().toISOString() })
           .eq("id", post.id);
-        results.push({ postId: post.id, status: "published", mediaId });
+        return { postId: post.id, status: "published", mediaId };
       } else if (status_code === "ERROR" || status_code === "EXPIRED") {
         await supabase
           .from("posts")
           .update({ status: "failed", error_message: `Container status: ${status_code}` })
           .eq("id", post.id);
-        results.push({ postId: post.id, status: "failed" });
+        return { postId: post.id, status: "failed" };
       } else {
-        results.push({ postId: post.id, status: "still_processing" });
+        return { postId: post.id, status: "still_processing" };
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       await supabase.from("posts").update({ status: "failed", error_message: message }).eq("id", post.id);
-      results.push({ postId: post.id, error: message });
+      return { postId: post.id, error: message };
     }
-  }
+  });
 
   return NextResponse.json({ checked: results.length, results });
 }

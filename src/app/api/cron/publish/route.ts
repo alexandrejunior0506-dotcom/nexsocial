@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/crypto";
 import { createReelsContainer } from "@/lib/instagram/graph-api";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
+import { mapWithConcurrency } from "@/lib/concurrency";
 
 export const maxDuration = 60;
 
@@ -25,9 +26,7 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const results = [];
-
-  for (const post of duePosts ?? []) {
+  const results = await mapWithConcurrency(duePosts ?? [], 8, async (post) => {
     const account = post.accounts as unknown as {
       id: string;
       ig_business_account_id: string;
@@ -39,7 +38,7 @@ export async function GET(req: NextRequest) {
         .from("posts")
         .update({ status: "failed", error_message: "Conta não encontrada" })
         .eq("id", post.id);
-      continue;
+      return { postId: post.id, error: "Conta não encontrada" };
     }
 
     try {
@@ -57,13 +56,13 @@ export async function GET(req: NextRequest) {
         .update({ status: "processing", ig_container_id: containerId })
         .eq("id", post.id);
 
-      results.push({ postId: post.id, containerId });
+      return { postId: post.id, containerId };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
       await supabase.from("posts").update({ status: "failed", error_message: message }).eq("id", post.id);
-      results.push({ postId: post.id, error: message });
+      return { postId: post.id, error: message };
     }
-  }
+  });
 
   return NextResponse.json({ processed: results.length, results });
 }

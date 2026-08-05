@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/crypto";
 import { getAccountInsights, getMediaInsights } from "@/lib/instagram/graph-api";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
+import { mapWithConcurrency } from "@/lib/concurrency";
 
 export const maxDuration = 60;
 
@@ -21,8 +22,7 @@ export async function GET(req: NextRequest) {
 
   if (accountsError) return NextResponse.json({ error: accountsError.message }, { status: 500 });
 
-  const accountResults = [];
-  for (const account of accounts ?? []) {
+  const accountResults = await mapWithConcurrency(accounts ?? [], 8, async (account) => {
     try {
       const accessToken = decryptToken(account.access_token_encrypted);
       const insights = await getAccountInsights(account.ig_business_account_id, accessToken);
@@ -39,12 +39,12 @@ export async function GET(req: NextRequest) {
         { onConflict: "account_id,date" },
       );
 
-      accountResults.push({ accountId: account.id, status: "ok" });
+      return { accountId: account.id, status: "ok" };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
-      accountResults.push({ accountId: account.id, status: "error", error: message });
+      return { accountId: account.id, status: "error", error: message };
     }
-  }
+  });
 
   const { data: publishedPosts, error: postsError } = await supabase
     .from("posts")
@@ -54,10 +54,9 @@ export async function GET(req: NextRequest) {
 
   if (postsError) return NextResponse.json({ error: postsError.message }, { status: 500 });
 
-  const postResults = [];
-  for (const post of publishedPosts ?? []) {
+  const postResults = await mapWithConcurrency(publishedPosts ?? [], 8, async (post) => {
     const account = post.accounts as unknown as { access_token_encrypted: string } | null;
-    if (!account || !post.ig_media_id) continue;
+    if (!account || !post.ig_media_id) return { postId: post.id, status: "skipped" };
 
     try {
       const accessToken = decryptToken(account.access_token_encrypted);
@@ -73,12 +72,12 @@ export async function GET(req: NextRequest) {
         plays: insights.plays ?? null,
       });
 
-      postResults.push({ postId: post.id, status: "ok" });
+      return { postId: post.id, status: "ok" };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro desconhecido";
-      postResults.push({ postId: post.id, status: "error", error: message });
+      return { postId: post.id, status: "error", error: message };
     }
-  }
+  });
 
   return NextResponse.json({ accounts: accountResults, posts: postResults });
 }
