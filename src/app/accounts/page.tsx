@@ -19,6 +19,14 @@ interface Account {
   created_at: string;
 }
 
+function tokenExpiryInfo(expiresAt: string) {
+  const daysLeft = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000);
+  if (daysLeft <= 0) return { label: "Token expirado", color: "text-red-400" };
+  if (daysLeft <= 7) return { label: `Token expira em ${daysLeft} dia${daysLeft === 1 ? "" : "s"}`, color: "text-red-400" };
+  if (daysLeft <= 15) return { label: `Token expira em ${daysLeft} dias`, color: "text-yellow-400" };
+  return { label: `Token expira em ${daysLeft} dias`, color: "text-neutral-600" };
+}
+
 export default function AccountsPage() {
   return (
     <Suspense fallback={null}>
@@ -197,8 +205,8 @@ function AccountsContent() {
                   )}
                 </div>
                 <p className="text-sm text-neutral-500">@{acc.ig_username}</p>
-                <p className="text-xs text-neutral-600">
-                  token expira em {new Date(acc.token_expires_at).toLocaleDateString("pt-BR")}
+                <p className={`text-xs ${tokenExpiryInfo(acc.token_expires_at).color}`}>
+                  {tokenExpiryInfo(acc.token_expires_at).label} ({new Date(acc.token_expires_at).toLocaleDateString("pt-BR")})
                 </p>
                 {acc.status === "error" && acc.last_error && (
                   <p className="mt-1 max-w-xs text-xs text-red-400">{acc.last_error}</p>

@@ -125,18 +125,18 @@ export async function createReelsContainer(
   accessToken: string,
   videoUrl: string,
   caption: string,
+  coverUrl?: string | null,
 ) {
-  const data = await graphFetch<{ id: string }>(
-    `/${igUserId}/media`,
-    {
-      access_token: accessToken,
-      media_type: "REELS",
-      video_url: videoUrl,
-      caption,
-      share_to_feed: "true",
-    },
-    "POST",
-  );
+  const params: Record<string, string> = {
+    access_token: accessToken,
+    media_type: "REELS",
+    video_url: videoUrl,
+    caption,
+    share_to_feed: "true",
+  };
+  if (coverUrl) params.cover_url = coverUrl;
+
+  const data = await graphFetch<{ id: string }>(`/${igUserId}/media`, params, "POST");
   return data.id;
 }
 

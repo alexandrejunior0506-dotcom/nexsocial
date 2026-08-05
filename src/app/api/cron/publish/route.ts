@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: duePosts, error } = await supabase
     .from("posts")
-    .select("id, video_url, caption, account_id, accounts(id, ig_business_account_id, access_token_encrypted)")
+    .select("id, video_url, cover_url, caption, account_id, accounts(id, ig_business_account_id, access_token_encrypted)")
     .eq("status", "scheduled")
     .lte("scheduled_at", new Date().toISOString());
 
@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
         accessToken,
         post.video_url,
         post.caption,
+        post.cover_url,
       );
 
       await supabase

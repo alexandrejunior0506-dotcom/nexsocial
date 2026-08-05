@@ -17,6 +17,8 @@ interface Account {
 const CAPTION_LIMIT = 2200;
 const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500MB
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
+const MAX_COVER_BYTES = 8 * 1024 * 1024; // 8MB
+const ALLOWED_COVER_TYPES = ["image/jpeg", "image/png"];
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -27,11 +29,14 @@ export default function NewPostPage() {
   const [scheduledAt, setScheduledAt] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/accounts")
@@ -51,6 +56,23 @@ export default function NewPostPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewUrl]);
 
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coverPreviewUrl]);
+
+  useEffect(() => {
+    if (!submitting) return;
+    function handler(e: BeforeUnloadEvent) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [submitting]);
+
   const selectedAccount = accounts.find((a) => a.id === accountId);
 
   function pickFile(picked: File | null) {
@@ -67,6 +89,34 @@ export default function NewPostPage() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(picked);
     setPreviewUrl(picked ? URL.createObjectURL(picked) : null);
+  }
+
+  function pickCover(picked: File | null) {
+    if (picked) {
+      if (!ALLOWED_COVER_TYPES.includes(picked.type)) {
+        showToast("Formato inválido. Envie uma imagem JPG ou PNG.", "error");
+        return;
+      }
+      if (picked.size > MAX_COVER_BYTES) {
+        showToast("Imagem muito grande. O limite é 8MB.", "error");
+        return;
+      }
+    }
+    if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
+    setCoverFile(picked);
+    setCoverPreviewUrl(picked ? URL.createObjectURL(picked) : null);
+  }
+
+  async function uploadFile(uploadFile: File): Promise<string> {
+    const uploadUrlRes = await fetch("/api/posts/upload-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName: uploadFile.name }),
+    });
+    const { signedUrl, publicUrl, error } = await uploadUrlRes.json();
+    if (!uploadUrlRes.ok || error) throw new Error(error || "Falha ao preparar o upload");
+    await uploadWithProgress(signedUrl, uploadFile);
+    return publicUrl;
   }
 
   function uploadWithProgress(url: string, uploadFile: File): Promise<void> {
@@ -94,17 +144,15 @@ export default function NewPostPage() {
     setSubmitting(true);
     setProgress(0);
     try {
-      setStatus("Preparando upload...");
-      const uploadUrlRes = await fetch("/api/posts/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name }),
-      });
-      const { signedUrl, publicUrl, error: uploadUrlError } = await uploadUrlRes.json();
-      if (uploadUrlError) throw new Error(uploadUrlError);
+      let coverUrl: string | null = null;
+      if (coverFile) {
+        setStatus("Enviando capa...");
+        coverUrl = await uploadFile(coverFile);
+      }
 
       setStatus("Enviando vídeo...");
-      await uploadWithProgress(signedUrl, file);
+      setProgress(0);
+      const videoUrl = await uploadFile(file);
 
       setStatus("Agendando post...");
       const createRes = await fetch("/api/posts", {
@@ -112,13 +160,14 @@ export default function NewPostPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           account_id: accountId,
-          video_url: publicUrl,
+          video_url: videoUrl,
+          cover_url: coverUrl,
           caption,
           scheduled_at: new Date(scheduledAt).toISOString(),
         }),
       });
       const createData = await createRes.json();
-      if (createData.error) throw new Error(createData.error);
+      if (!createRes.ok || createData.error) throw new Error(createData.error || "Falha ao agendar o post");
 
       showToast("Post agendado com sucesso!");
       router.push("/calendar");
@@ -213,6 +262,46 @@ export default function NewPostPage() {
                 Trocar vídeo
               </button>
             )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm text-neutral-300">Capa do vídeo (opcional)</label>
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/jpeg,image/png"
+              onChange={(e) => pickCover(e.target.files?.[0] || null)}
+              className="hidden"
+            />
+            <div className="flex items-center gap-3">
+              {coverPreviewUrl && (
+                <Image
+                  src={coverPreviewUrl}
+                  alt="Capa"
+                  width={48}
+                  height={48}
+                  unoptimized
+                  className="h-12 w-12 shrink-0 rounded-md border border-[var(--border)] object-cover"
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => coverInputRef.current?.click()}
+                className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-neutral-300 hover:bg-[var(--surface-hover)]"
+              >
+                {coverPreviewUrl ? "Trocar capa" : "Escolher imagem de capa"}
+              </button>
+              {coverPreviewUrl && (
+                <button
+                  type="button"
+                  onClick={() => pickCover(null)}
+                  className="text-sm text-[var(--muted)] hover:text-white"
+                >
+                  Remover
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-[var(--muted)]">JPG ou PNG. Se não escolher, o Instagram usa um frame do vídeo.</p>
           </div>
 
           <div className="space-y-1">

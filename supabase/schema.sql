@@ -20,6 +20,7 @@ create table if not exists posts (
   id uuid primary key default gen_random_uuid(),
   account_id uuid not null references accounts(id) on delete cascade,
   video_url text not null,
+  cover_url text,
   caption text not null default '',
   scheduled_at timestamptz not null,
   status text not null default 'scheduled'

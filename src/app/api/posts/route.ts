@@ -5,7 +5,7 @@ export async function GET() {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("id, video_url, caption, scheduled_at, status, published_at, error_message, accounts(persona_name, ig_username)")
+    .select("id, video_url, cover_url, caption, scheduled_at, status, published_at, error_message, accounts(persona_name, ig_username)")
     .order("scheduled_at", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -13,7 +13,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { account_id, video_url, caption, scheduled_at } = await req.json();
+  const { account_id, video_url, cover_url, caption, scheduled_at } = await req.json();
 
   if (!account_id || !video_url || !scheduled_at) {
     return NextResponse.json(
@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     .insert({
       account_id,
       video_url,
+      cover_url: cover_url || null,
       caption: caption || "",
       scheduled_at,
       status: "scheduled",
