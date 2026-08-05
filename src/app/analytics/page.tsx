@@ -80,7 +80,8 @@ export default function AnalyticsPage() {
         setRanking(data.accounts || []);
         setTopVideo(data.topVideo || null);
         setOverviewLoading(false);
-      });
+      })
+      .catch(() => setOverviewLoading(false));
   }, []);
 
   useEffect(() => {
@@ -91,7 +92,8 @@ export default function AnalyticsPage() {
         setSnapshots(data.snapshots || []);
         setPosts(data.posts || []);
         setLoadedFor(accountId);
-      });
+      })
+      .catch(() => setLoadedFor(accountId));
   }, [accountId]);
 
   const selected = ranking.find((a) => a.id === accountId);

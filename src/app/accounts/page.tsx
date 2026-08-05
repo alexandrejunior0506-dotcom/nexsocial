@@ -51,7 +51,12 @@ function AccountsContent() {
       .then((data) => {
         setAccounts(data.accounts || []);
         setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        showToast("Falha ao carregar contas. Verifique sua conexão.", "error");
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -60,22 +65,39 @@ function AccountsContent() {
   }, []);
 
   async function saveRename(id: string) {
-    await fetch("/api/accounts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, persona_name: editValue }),
-    });
-    setEditingId(null);
-    showToast("Nome atualizado.");
-    load();
+    const name = editValue.trim();
+    if (!name) {
+      showToast("O nome não pode ficar vazio.", "error");
+      return;
+    }
+    try {
+      const res = await fetch("/api/accounts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, persona_name: name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Falha ao atualizar o nome");
+      setEditingId(null);
+      showToast("Nome atualizado.");
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao atualizar o nome", "error");
+    }
   }
 
   async function removeAccount(id: string) {
     const ok = await confirm("Desconectar esta conta do NexSocial?");
     if (!ok) return;
-    await fetch(`/api/accounts?id=${id}`, { method: "DELETE" });
-    showToast("Conta desconectada.");
-    load();
+    try {
+      const res = await fetch(`/api/accounts?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Falha ao desconectar a conta");
+      showToast("Conta desconectada.");
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao desconectar a conta", "error");
+    }
   }
 
   async function checkAccount(id: string) {

@@ -37,7 +37,9 @@ export default function NewPostPage() {
       .then((data) => {
         setAccounts(data.accounts || []);
         if (data.accounts?.[0]) setAccountId(data.accounts[0].id);
-      });
+      })
+      .catch(() => showToast("Falha ao carregar contas. Verifique sua conexão.", "error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedAccount = accounts.find((a) => a.id === accountId);

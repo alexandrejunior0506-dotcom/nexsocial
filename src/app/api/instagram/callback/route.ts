@@ -30,11 +30,17 @@ export async function GET(req: NextRequest) {
     const supabase = createServiceClient();
     const expiresAt = new Date(Date.now() + longLived.expires_in * 1000).toISOString();
 
+    const { data: existing } = await supabase
+      .from("accounts")
+      .select("id, persona_name")
+      .eq("ig_business_account_id", igUserId)
+      .maybeSingle();
+
     await supabase
       .from("accounts")
       .upsert(
         {
-          persona_name: username,
+          persona_name: existing?.persona_name ?? username,
           ig_username: username,
           ig_business_account_id: igUserId,
           access_token_encrypted: encryptToken(longLived.access_token),

@@ -73,15 +73,26 @@ export default function CalendarPage() {
       .then((data) => {
         setPosts(data.posts || []);
         setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+        showToast("Falha ao carregar posts. Verifique sua conexão.", "error");
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function cancelPost(id: string) {
     const ok = await confirm("Cancelar este post agendado?");
     if (!ok) return;
-    await fetch(`/api/posts/${id}`, { method: "DELETE" });
-    showToast("Post cancelado.");
-    load();
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Falha ao cancelar o post");
+      showToast("Post cancelado.");
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao cancelar o post", "error");
+    }
   }
 
   function openEdit(post: Post) {
