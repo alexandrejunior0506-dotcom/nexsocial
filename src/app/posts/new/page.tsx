@@ -15,6 +15,8 @@ interface Account {
 }
 
 const CAPTION_LIMIT = 2200;
+const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500MB
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -42,9 +44,26 @@ export default function NewPostPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewUrl]);
+
   const selectedAccount = accounts.find((a) => a.id === accountId);
 
   function pickFile(picked: File | null) {
+    if (picked) {
+      if (!ALLOWED_VIDEO_TYPES.includes(picked.type)) {
+        showToast("Formato inválido. Envie um vídeo MP4 ou MOV.", "error");
+        return;
+      }
+      if (picked.size > MAX_VIDEO_BYTES) {
+        showToast("Vídeo muito grande. O limite é 500MB.", "error");
+        return;
+      }
+    }
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(picked);
     setPreviewUrl(picked ? URL.createObjectURL(picked) : null);
@@ -67,6 +86,10 @@ export default function NewPostPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!file || !accountId || !scheduledAt) return;
+    if (new Date(scheduledAt).getTime() < Date.now() - 60000) {
+      showToast("Escolha uma data e hora no futuro.", "error");
+      return;
+    }
 
     setSubmitting(true);
     setProgress(0);

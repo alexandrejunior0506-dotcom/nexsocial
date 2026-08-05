@@ -103,6 +103,10 @@ export default function CalendarPage() {
 
   async function saveEdit() {
     if (!editingPost) return;
+    if (new Date(editScheduledAt).getTime() < Date.now() - 60000) {
+      showToast("Escolha uma data e hora no futuro.", "error");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch(`/api/posts/${editingPost.id}`, {
