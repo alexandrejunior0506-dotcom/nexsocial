@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { fileName } = await req.json();
   if (!fileName) return NextResponse.json({ error: "fileName is required" }, { status: 400 });
 
-  const extension = fileName.includes(".") ? fileName.split(".").pop() : "mp4";
+  const extension = (fileName.includes(".") ? fileName.split(".").pop() : "") || "mp4";
   const path = `${randomUUID()}.${extension}`;
 
   const supabase = createServiceClient();
