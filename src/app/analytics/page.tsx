@@ -62,6 +62,22 @@ interface Post {
   post_analytics: PostAnalytics[];
 }
 
+interface LivePostMetrics {
+  id: string;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  saved?: number;
+  reach?: number;
+  plays?: number;
+}
+
+interface LiveData {
+  account: { followers_count?: number; reach?: number; profile_views?: number };
+  posts: LivePostMetrics[];
+  fetchedAt: string;
+}
+
 export default function AnalyticsPage() {
   const [ranking, setRanking] = useState<AccountRanking[]>([]);
   const [topVideo, setTopVideo] = useState<TopVideo | null>(null);
@@ -72,6 +88,25 @@ export default function AnalyticsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const detailLoading = accountId !== loadedFor;
+
+  const [live, setLive] = useState<LiveData | null>(null);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [liveLoading, setLiveLoading] = useState(false);
+
+  async function fetchLive(id: string) {
+    setLiveLoading(true);
+    setLiveError(null);
+    try {
+      const res = await fetch(`/api/analytics/live?account_id=${id}`);
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Falha ao buscar dados ao vivo");
+      setLive(data);
+    } catch (err) {
+      setLiveError(err instanceof Error ? err.message : "Falha ao buscar dados ao vivo");
+    } finally {
+      setLiveLoading(false);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/analytics/overview")
@@ -86,6 +121,8 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (!accountId) return;
+    setLive(null);
+    setLiveError(null);
     fetch(`/api/analytics?account_id=${accountId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -205,7 +242,24 @@ export default function AnalyticsPage() {
 
       {accountId && (
         <div className="mt-8">
-          <h2 className="text-lg font-medium">Detalhes de {selected?.persona_name}</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-medium">Detalhes de {selected?.persona_name}</h2>
+            <div className="flex items-center gap-2">
+              {live && (
+                <span className="text-xs text-[var(--muted)]">
+                  Ao vivo às {new Date(live.fetchedAt).toLocaleTimeString("pt-BR")}
+                </span>
+              )}
+              <button
+                onClick={() => fetchLive(accountId)}
+                disabled={liveLoading}
+                className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs hover:bg-[var(--surface-hover)] disabled:opacity-50"
+              >
+                {liveLoading ? "Buscando..." : "🔴 Atualizar agora"}
+              </button>
+            </div>
+          </div>
+          {liveError && <p className="mt-2 text-xs text-red-400">{liveError}</p>}
 
           {detailLoading ? (
             <div className="mt-3 space-y-3">
@@ -215,8 +269,11 @@ export default function AnalyticsPage() {
           ) : (
             <>
               <div className="mt-3 grid grid-cols-4 gap-3">
-                <MiniStat label="Seguidores" value={latestSnapshot?.followers_count ?? "-"} />
-                <MiniStat label="Alcance médio" value={avgReach || "-"} />
+                <MiniStat
+                  label="Seguidores"
+                  value={live?.account.followers_count ?? latestSnapshot?.followers_count ?? "-"}
+                />
+                <MiniStat label="Alcance médio" value={live?.account.reach ?? (avgReach || "-")} />
                 <MiniStat label="Posts publicados" value={posts.length} />
                 <MiniStat
                   label="Melhor post"
@@ -243,25 +300,41 @@ export default function AnalyticsPage() {
               <div className="mt-2 space-y-2">
                 {posts.length === 0 && <p className="text-neutral-400">Nenhum post publicado ainda.</p>}
                 {posts.map((post, i) => {
-                  const latest = post.post_analytics?.[0];
+                  const cached = post.post_analytics?.[0];
+                  const liveMetrics = live?.posts.find((p) => p.id === post.id);
+                  const isLive = !!liveMetrics;
+                  const likes = liveMetrics?.likes ?? cached?.likes;
+                  const comments = liveMetrics?.comments ?? cached?.comments;
+                  const shares = liveMetrics?.shares ?? cached?.shares;
+                  const saves = liveMetrics?.saved ?? cached?.saves;
+                  const reach = liveMetrics?.reach ?? cached?.reach;
+                  const plays = liveMetrics?.plays ?? cached?.plays;
+                  const hasAny = likes != null || comments != null || cached || liveMetrics;
                   return (
                     <div
                       key={post.id}
                       style={{ animationDelay: `${i * 0.05}s` }}
                       className="nex-card nex-rise-in rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
                     >
-                      <p className="line-clamp-1 text-sm text-neutral-300">{post.caption}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="line-clamp-1 text-sm text-neutral-300">{post.caption}</p>
+                        {isLive && (
+                          <span className="shrink-0 rounded-full bg-red-950/40 px-1.5 py-0.5 text-[10px] text-red-400">
+                            ao vivo
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-1 text-xs text-neutral-600">
                         {post.published_at ? new Date(post.published_at).toLocaleString("pt-BR") : ""}
                       </p>
-                      {latest ? (
+                      {hasAny ? (
                         <div className="mt-2 flex gap-4 text-sm text-neutral-400">
-                          <span>❤️ {latest.likes ?? "-"}</span>
-                          <span>💬 {latest.comments ?? "-"}</span>
-                          <span>🔁 {latest.shares ?? "-"}</span>
-                          <span>🔖 {latest.saves ?? "-"}</span>
-                          <span>👁 {latest.reach ?? "-"}</span>
-                          <span>▶️ {latest.plays ?? "-"}</span>
+                          <span>❤️ {likes ?? "-"}</span>
+                          <span>💬 {comments ?? "-"}</span>
+                          <span>🔁 {shares ?? "-"}</span>
+                          <span>🔖 {saves ?? "-"}</span>
+                          <span>👁 {reach ?? "-"}</span>
+                          <span>▶️ {plays ?? "-"}</span>
                         </div>
                       ) : (
                         <p className="mt-2 text-sm text-neutral-600">Sem métricas ainda.</p>
