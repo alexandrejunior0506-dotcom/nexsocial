@@ -135,7 +135,15 @@ export default function NewPostPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file || !accountId || !scheduledAt) return;
+    if (!file) return;
+    if (!accountId) {
+      showToast("Selecione uma conta.", "error");
+      return;
+    }
+    if (!scheduledAt) {
+      showToast("Escolha uma data e hora para o agendamento.", "error");
+      return;
+    }
     if (new Date(scheduledAt).getTime() < Date.now() - 60000) {
       showToast("Escolha uma data e hora no futuro.", "error");
       return;

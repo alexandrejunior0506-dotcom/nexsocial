@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   LineChart,
@@ -92,6 +92,8 @@ export default function AnalyticsPage() {
   const [live, setLive] = useState<LiveData | null>(null);
   const [liveError, setLiveError] = useState<string | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
+  const selectedAccountRef = useRef(accountId);
+  selectedAccountRef.current = accountId;
 
   async function fetchLive(id: string) {
     setLiveLoading(true);
@@ -100,11 +102,13 @@ export default function AnalyticsPage() {
       const res = await fetch(`/api/analytics/live?account_id=${id}`);
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Falha ao buscar dados ao vivo");
+      if (selectedAccountRef.current !== id) return; // conta foi trocada antes da resposta chegar
       setLive(data);
     } catch (err) {
+      if (selectedAccountRef.current !== id) return;
       setLiveError(err instanceof Error ? err.message : "Falha ao buscar dados ao vivo");
     } finally {
-      setLiveLoading(false);
+      if (selectedAccountRef.current === id) setLiveLoading(false);
     }
   }
 
