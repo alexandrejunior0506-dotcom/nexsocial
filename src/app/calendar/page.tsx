@@ -310,8 +310,8 @@ export default function CalendarPage() {
       )}
 
       {editingPost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 animate-scale-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4 animate-fade-in">
+          <div className="mx-auto my-8 w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Editar post</h3>
               <button
@@ -344,20 +344,32 @@ export default function CalendarPage() {
               <DateTimePicker value={editScheduledAt} onChange={setEditScheduledAt} />
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-5 flex items-center justify-between gap-2">
               <button
-                onClick={() => setEditingPost(null)}
-                className="rounded-md border border-[var(--border)] px-4 py-2 text-sm hover:bg-[var(--surface-hover)]"
+                onClick={async () => {
+                  const id = editingPost.id;
+                  setEditingPost(null);
+                  await cancelPost(id);
+                }}
+                className="rounded-md border border-red-900/60 px-4 py-2 text-sm text-red-400 hover:bg-red-950/40"
               >
-                Cancelar
+                Excluir
               </button>
-              <button
-                onClick={saveEdit}
-                disabled={saving}
-                className="nex-gradient-bg rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {saving ? "Salvando..." : "Salvar alterações"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingPost(null)}
+                  className="rounded-md border border-[var(--border)] px-4 py-2 text-sm hover:bg-[var(--surface-hover)]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={saveEdit}
+                  disabled={saving}
+                  className="nex-gradient-bg rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {saving ? "Salvando..." : "Salvar alterações"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
