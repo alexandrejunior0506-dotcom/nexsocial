@@ -204,14 +204,16 @@ export async function getMediaInsights(mediaId: string, accessToken: string): Pr
     `/${mediaId}/insights`,
     {
       access_token: accessToken,
-      metric: "likes,comments,shares,saved,reach,plays",
+      // A Meta descontinuou a metrica "plays" para Reels; o equivalente atual e "views".
+      metric: "likes,comments,shares,saved,reach,views",
     },
   );
 
   const result: MediaInsights = {};
   for (const metric of data.data) {
     const value = metric.values[metric.values.length - 1]?.value;
-    (result as Record<string, number | undefined>)[metric.name] = value;
+    const key = metric.name === "views" ? "plays" : metric.name;
+    (result as Record<string, number | undefined>)[key] = value;
   }
   return result;
 }
