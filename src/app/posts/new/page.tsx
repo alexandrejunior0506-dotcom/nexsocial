@@ -233,7 +233,6 @@ export default function NewPostPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="video/mp4,video/quicktime"
               required
               onChange={(e) => pickFile(e.target.files?.[0] || null)}
               className="hidden"
@@ -277,7 +276,6 @@ export default function NewPostPage() {
             <input
               ref={coverInputRef}
               type="file"
-              accept="image/jpeg,image/png"
               onChange={(e) => pickCover(e.target.files?.[0] || null)}
               className="hidden"
             />
