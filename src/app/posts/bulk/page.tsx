@@ -40,6 +40,7 @@ export default function BulkPostPage() {
   const [existingCoverUrl, setExistingCoverUrl] = useState<string | null>(null);
   const [coverRemoved, setCoverRemoved] = useState(false);
   const [postsPerDay, setPostsPerDay] = useState(3);
+  const [startDate, setStartDate] = useState("");
   const [dragging, setDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -213,6 +214,7 @@ export default function BulkPostPage() {
           cover_url: coverUrl,
           video_urls: videoUrls,
           posts_per_day: postsPerDay,
+          start_date: startDate || undefined,
         }),
       });
       const data = await res.json();
@@ -442,7 +444,35 @@ export default function BulkPostPage() {
             className="w-24 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white outline-none focus:border-sky-500"
           />
           <p className="text-xs text-[var(--muted)]">
-            O agendamento começa no primeiro dia livre depois do último post já agendado dessa conta.
+            {startDate
+              ? "Data de início escolhida abaixo — os horários dentro de cada dia continuam automáticos."
+              : "O agendamento começa no primeiro dia livre depois do último post já agendado dessa conta."}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm text-neutral-300">Data de início (opcional)</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={startDate}
+              min={new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date())}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white outline-none focus:border-sky-500"
+            />
+            {startDate && (
+              <button
+                type="button"
+                onClick={() => setStartDate("")}
+                className="text-sm text-[var(--muted)] hover:text-white"
+              >
+                Limpar (voltar ao automático)
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-[var(--muted)]">
+            Deixe em branco para o sistema escolher sozinho. Os horários dentro de cada dia continuam
+            automáticos mesmo escolhendo a data.
           </p>
         </div>
 

@@ -13,13 +13,18 @@ function pad(n: number) {
 }
 
 export async function POST(req: NextRequest) {
-  const { account_id, caption, cover_url, video_urls, posts_per_day } = await req.json();
+  const { account_id, caption, cover_url, video_urls, posts_per_day, start_date } = await req.json();
 
   if (!account_id || !Array.isArray(video_urls) || video_urls.length === 0) {
     return NextResponse.json({ error: "account_id e video_urls são obrigatórios" }, { status: 400 });
   }
 
   const postsPerDay = Math.max(1, Math.min(10, Number(posts_per_day) || 3));
+
+  const todayStr = brasiliaDateStr(new Date());
+  if (start_date && (!/^\d{4}-\d{2}-\d{2}$/.test(start_date) || start_date < todayStr)) {
+    return NextResponse.json({ error: "Data de início inválida ou no passado" }, { status: 400 });
+  }
 
   const supabase = createServiceClient();
 
@@ -43,7 +48,9 @@ export async function POST(req: NextRequest) {
   const usedTimestamps = new Set((allScheduled ?? []).map((p) => new Date(p.scheduled_at).toISOString()));
 
   let startDate: Date;
-  if (lastForAccount && lastForAccount.length > 0) {
+  if (start_date) {
+    startDate = new Date(`${start_date}T12:00:00-03:00`);
+  } else if (lastForAccount && lastForAccount.length > 0) {
     const lastDayStr = brasiliaDateStr(new Date(lastForAccount[0].scheduled_at));
     startDate = new Date(`${lastDayStr}T12:00:00-03:00`);
     startDate.setDate(startDate.getDate() + 1);
