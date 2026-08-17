@@ -8,6 +8,7 @@ import { signOutAction } from "@/lib/actions/sign-out";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
   { href: "/posts/new", label: "Agendar post", icon: PlusIcon },
+  { href: "/posts/bulk", label: "Agendar em lote", icon: LayersIcon },
   { href: "/calendar", label: "Calendário", icon: CalendarIcon },
   { href: "/accounts", label: "Contas", icon: UsersIcon },
   { href: "/analytics", label: "Analytics", icon: ChartIcon },
@@ -94,6 +95,15 @@ function UsersIcon({ className }: { className?: string }) {
       <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" strokeLinecap="round" />
       <circle cx="17" cy="9" r="2.5" />
       <path d="M15 20c.3-2.4 1.6-4.3 3.5-5.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function LayersIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path d="m12 3 9 5-9 5-9-5 9-5Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m3 13 9 5 9-5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
