@@ -127,6 +127,7 @@ export default function AnalyticsPage() {
     if (!accountId) return;
     setLive(null);
     setLiveError(null);
+    setLiveLoading(false);
     fetch(`/api/analytics?account_id=${accountId}`)
       .then((res) => res.json())
       .then((data) => {

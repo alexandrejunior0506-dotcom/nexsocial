@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 const SCOPES = [
@@ -8,9 +8,9 @@ const SCOPES = [
 ].join(",");
 
 /** Kicks off the Instagram Business Login dialog so the user can connect an Instagram account. */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
-  if (!session) return NextResponse.redirect("/login");
+  if (!session) return NextResponse.redirect(new URL("/login", req.url));
 
   const url = new URL("https://www.instagram.com/oauth/authorize");
   url.searchParams.set("client_id", process.env.INSTAGRAM_APP_ID!);

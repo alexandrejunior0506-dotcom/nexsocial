@@ -32,8 +32,8 @@ export default function BulkPostPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [caption, setCaption] = useState("");
-  const [captionTouched, setCaptionTouched] = useState(false);
   const [suggestedCaption, setSuggestedCaption] = useState<string | null>(null);
+  const captionTouchedRef = useRef(false);
   const [videos, setVideos] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export default function BulkPostPage() {
   }, [coverPreviewUrl]);
 
   useEffect(() => {
-    setCaptionTouched(false);
+    captionTouchedRef.current = false;
     setSuggestedCaption(null);
     setExistingCoverUrl(null);
     setCoverRemoved(false);
@@ -83,8 +83,8 @@ export default function BulkPostPage() {
         const withCaption = ownPosts.find((p) => p.caption);
         if (withCaption) {
           setSuggestedCaption(withCaption.caption);
-          setCaption(withCaption.caption);
-        } else {
+          if (!captionTouchedRef.current) setCaption(withCaption.caption);
+        } else if (!captionTouchedRef.current) {
           setCaption("");
         }
 
@@ -394,7 +394,7 @@ export default function BulkPostPage() {
             value={caption}
             onChange={(e) => {
               setCaption(e.target.value);
-              setCaptionTouched(true);
+              captionTouchedRef.current = true;
             }}
             rows={5}
             placeholder="Pode deixar em branco se não quiser legenda"
@@ -405,7 +405,7 @@ export default function BulkPostPage() {
               type="button"
               onClick={() => {
                 setCaption("");
-                setCaptionTouched(true);
+                captionTouchedRef.current = true;
               }}
               className="text-[var(--muted)] hover:text-white"
             >
@@ -416,7 +416,7 @@ export default function BulkPostPage() {
                 type="button"
                 onClick={() => {
                   setCaption(suggestedCaption);
-                  setCaptionTouched(true);
+                  captionTouchedRef.current = true;
                 }}
                 className="text-sky-400 hover:text-sky-300"
               >

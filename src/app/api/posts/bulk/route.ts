@@ -64,20 +64,19 @@ export async function POST(req: NextRequest) {
 
     const segStart = WINDOW_START_MIN + slot * segmentSize;
     const randomOffset = Math.floor(Math.random() * segmentSize);
-    let minuteOfDay = Math.floor(segStart + randomOffset);
+    const minuteOfDay = Math.floor(segStart + randomOffset);
 
+    let cursor = new Date(`${dayStr}T${pad(Math.floor(minuteOfDay / 60))}:${pad(minuteOfDay % 60)}:00-03:00`);
     let candidateIso = "";
-    for (let attempt = 0; attempt < 200; attempt++) {
-      const hh = Math.floor(minuteOfDay / 60) % 24;
-      const mm = minuteOfDay % 60;
-      const candidate = new Date(`${dayStr}T${pad(hh)}:${pad(mm)}:00-03:00`);
-      const iso = candidate.toISOString();
+    // Advances minute-by-minute (rolling into later days if needed) until a free slot is found.
+    for (let attempt = 0; attempt < 20000; attempt++) {
+      const iso = cursor.toISOString();
       if (!usedTimestamps.has(iso)) {
         candidateIso = iso;
         usedTimestamps.add(iso);
         break;
       }
-      minuteOfDay += 1;
+      cursor = new Date(cursor.getTime() + 60000);
     }
 
     return {
@@ -89,6 +88,10 @@ export async function POST(req: NextRequest) {
       status: "scheduled" as const,
     };
   });
+
+  if (rows.some((r) => !r.scheduled_at)) {
+    return NextResponse.json({ error: "Não foi possível encontrar horários livres para todos os vídeos" }, { status: 500 });
+  }
 
   const { data: inserted, error: insertError } = await supabase.from("posts").insert(rows).select();
 
