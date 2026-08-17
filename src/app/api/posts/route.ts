@@ -5,7 +5,7 @@ export async function GET() {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("id, video_url, cover_url, caption, scheduled_at, status, published_at, error_message, accounts(persona_name, ig_username)")
+    .select("id, account_id, video_url, cover_url, caption, scheduled_at, status, published_at, error_message, accounts(persona_name, ig_username)")
     .order("scheduled_at", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

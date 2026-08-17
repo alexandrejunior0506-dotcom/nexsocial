@@ -13,6 +13,12 @@ interface Account {
   profile_picture_url: string | null;
 }
 
+interface PostForCaption {
+  account_id: string;
+  caption: string;
+  scheduled_at: string;
+}
+
 const CAPTION_LIMIT = 2200;
 const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
@@ -25,6 +31,8 @@ export default function BulkPostPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [caption, setCaption] = useState("");
+  const [captionTouched, setCaptionTouched] = useState(false);
+  const [suggestedCaption, setSuggestedCaption] = useState<string | null>(null);
   const [videos, setVideos] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
@@ -53,6 +61,27 @@ export default function BulkPostPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coverPreviewUrl]);
+
+  useEffect(() => {
+    setCaptionTouched(false);
+    setSuggestedCaption(null);
+    if (!accountId) return;
+    fetch("/api/posts")
+      .then((res) => res.json())
+      .then((data) => {
+        const posts = (data.posts ?? []) as PostForCaption[];
+        const ownPosts = posts
+          .filter((p) => p.account_id === accountId && p.caption)
+          .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+        if (ownPosts[0]) {
+          setSuggestedCaption(ownPosts[0].caption);
+          setCaption(ownPosts[0].caption);
+        } else {
+          setCaption("");
+        }
+      })
+      .catch(() => {});
+  }, [accountId]);
 
   useEffect(() => {
     if (!submitting) return;
@@ -337,10 +366,43 @@ export default function BulkPostPage() {
           </div>
           <textarea
             value={caption}
-            onChange={(e) => setCaption(e.target.value)}
+            onChange={(e) => {
+              setCaption(e.target.value);
+              setCaptionTouched(true);
+            }}
             rows={5}
+            placeholder="Pode deixar em branco se não quiser legenda"
             className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white outline-none focus:border-sky-500"
           />
+          <div className="flex items-center gap-3 text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setCaption("");
+                setCaptionTouched(true);
+              }}
+              className="text-[var(--muted)] hover:text-white"
+            >
+              Deixar em branco
+            </button>
+            {suggestedCaption && caption !== suggestedCaption && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCaption(suggestedCaption);
+                  setCaptionTouched(true);
+                }}
+                className="text-sky-400 hover:text-sky-300"
+              >
+                Usar a última legenda dessa conta
+              </button>
+            )}
+          </div>
+          {suggestedCaption && caption === suggestedCaption && (
+            <p className="text-xs text-[var(--muted)]">
+              Preenchido automaticamente com a última legenda usada nessa conta — edite à vontade.
+            </p>
+          )}
         </div>
 
         <div className="space-y-1">
