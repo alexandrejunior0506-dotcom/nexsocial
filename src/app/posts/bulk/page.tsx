@@ -13,9 +13,10 @@ interface Account {
   profile_picture_url: string | null;
 }
 
-interface PostForCaption {
+interface PostForDefaults {
   account_id: string;
   caption: string;
+  cover_url: string | null;
   scheduled_at: string;
 }
 
@@ -36,6 +37,8 @@ export default function BulkPostPage() {
   const [videos, setVideos] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [existingCoverUrl, setExistingCoverUrl] = useState<string | null>(null);
+  const [coverRemoved, setCoverRemoved] = useState(false);
   const [postsPerDay, setPostsPerDay] = useState(3);
   const [dragging, setDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -65,22 +68,31 @@ export default function BulkPostPage() {
   useEffect(() => {
     setCaptionTouched(false);
     setSuggestedCaption(null);
+    setExistingCoverUrl(null);
+    setCoverRemoved(false);
+    pickCover(null);
     if (!accountId) return;
     fetch("/api/posts")
       .then((res) => res.json())
       .then((data) => {
-        const posts = (data.posts ?? []) as PostForCaption[];
+        const posts = (data.posts ?? []) as PostForDefaults[];
         const ownPosts = posts
-          .filter((p) => p.account_id === accountId && p.caption)
+          .filter((p) => p.account_id === accountId)
           .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
-        if (ownPosts[0]) {
-          setSuggestedCaption(ownPosts[0].caption);
-          setCaption(ownPosts[0].caption);
+
+        const withCaption = ownPosts.find((p) => p.caption);
+        if (withCaption) {
+          setSuggestedCaption(withCaption.caption);
+          setCaption(withCaption.caption);
         } else {
           setCaption("");
         }
+
+        const withCover = ownPosts.find((p) => p.cover_url);
+        if (withCover) setExistingCoverUrl(withCover.cover_url);
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId]);
 
   useEffect(() => {
@@ -131,6 +143,7 @@ export default function BulkPostPage() {
     if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
     setCoverFile(picked);
     setCoverPreviewUrl(picked ? URL.createObjectURL(picked) : null);
+    if (picked) setCoverRemoved(false);
   }
 
   async function uploadFile(uploadFile: File): Promise<string> {
@@ -178,6 +191,8 @@ export default function BulkPostPage() {
         setStatus("Enviando capa...");
         setProgress(0);
         coverUrl = await uploadFile(coverFile);
+      } else if (existingCoverUrl && !coverRemoved) {
+        coverUrl = existingCoverUrl;
       }
 
       const videoUrls: string[] = [];
@@ -326,34 +341,45 @@ export default function BulkPostPage() {
             onChange={(e) => pickCover(e.target.files?.[0] || null)}
             className="hidden"
           />
-          <div className="flex items-center gap-3">
-            {coverPreviewUrl && (
-              <Image
-                src={coverPreviewUrl}
-                alt="Capa"
-                width={48}
-                height={48}
-                unoptimized
-                className="h-12 w-12 shrink-0 rounded-md border border-[var(--border)] object-cover"
-              />
-            )}
-            <button
-              type="button"
-              onClick={() => coverInputRef.current?.click()}
-              className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-neutral-300 hover:bg-[var(--surface-hover)]"
-            >
-              {coverPreviewUrl ? "Trocar capa" : "Escolher imagem de capa"}
-            </button>
-            {coverPreviewUrl && (
-              <button
-                type="button"
-                onClick={() => pickCover(null)}
-                className="text-sm text-[var(--muted)] hover:text-white"
-              >
-                Remover
-              </button>
-            )}
-          </div>
+          {(() => {
+            const activeCoverPreview = coverPreviewUrl || (!coverRemoved ? existingCoverUrl : null);
+            return (
+              <div className="flex items-center gap-3">
+                {activeCoverPreview && (
+                  <Image
+                    src={activeCoverPreview}
+                    alt="Capa"
+                    width={48}
+                    height={48}
+                    unoptimized
+                    className="h-12 w-12 shrink-0 rounded-md border border-[var(--border)] object-cover"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-neutral-300 hover:bg-[var(--surface-hover)]"
+                >
+                  {activeCoverPreview ? "Trocar capa" : "Escolher imagem de capa"}
+                </button>
+                {activeCoverPreview && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pickCover(null);
+                      setCoverRemoved(true);
+                    }}
+                    className="text-sm text-[var(--muted)] hover:text-white"
+                  >
+                    Remover
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+          {!coverFile && existingCoverUrl && !coverRemoved && (
+            <p className="text-xs text-[var(--muted)]">Capa salva dessa conta, reaproveitada automaticamente.</p>
+          )}
           <p className="text-xs text-[var(--muted)]">JPG ou PNG. Se não escolher, o Instagram usa um frame do vídeo.</p>
         </div>
 
