@@ -22,7 +22,8 @@ export async function GET() {
         "id, caption, published_at, account_id, accounts(persona_name, ig_username), post_analytics(likes, comments, shares, saves, plays, fetched_at)",
       )
       .eq("status", "published")
-      .order("fetched_at", { referencedTable: "post_analytics", ascending: false }),
+      .order("fetched_at", { referencedTable: "post_analytics", ascending: false })
+      .limit(1, { referencedTable: "post_analytics" }),
   ]);
 
   if (accountsError) return NextResponse.json({ error: accountsError.message }, { status: 500 });

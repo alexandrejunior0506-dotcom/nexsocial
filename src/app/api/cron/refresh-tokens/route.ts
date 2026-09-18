@@ -17,6 +17,8 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient();
   const soon = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Optional ops switch: ?force=<accountId> renews that account's token now (used to validate the renewal path).
+  const forceId = req.nextUrl.searchParams.get("force");
 
   const { data: accounts, error } = await supabase
     .from("accounts")
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
     try {
       let accessToken = decryptToken(account.access_token_encrypted);
 
-      if (account.token_expires_at <= soon) {
+      if (account.id === forceId || account.token_expires_at <= soon) {
         const refreshed = await refreshLongLivedToken(accessToken);
         accessToken = refreshed.access_token;
         await supabase

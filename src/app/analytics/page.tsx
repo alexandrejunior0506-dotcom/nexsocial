@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   LineChart,
@@ -89,26 +89,29 @@ export default function AnalyticsPage() {
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const detailLoading = accountId !== loadedFor;
 
-  const [live, setLive] = useState<LiveData | null>(null);
-  const [liveError, setLiveError] = useState<string | null>(null);
-  const [liveLoading, setLiveLoading] = useState(false);
-  const selectedAccountRef = useRef(accountId);
-  selectedAccountRef.current = accountId;
+  // Live data is tagged with the account it was fetched for, so switching accounts never shows
+  // (or gets stuck on) another account's live numbers/loading state.
+  const [liveState, setLiveState] = useState<{
+    accountId: string;
+    data?: LiveData;
+    error?: string;
+    loading: boolean;
+  } | null>(null);
+  const liveForSelected = liveState?.accountId === accountId ? liveState : null;
+  const live = liveForSelected?.data ?? null;
+  const liveError = liveForSelected?.error ?? null;
+  const liveLoading = liveForSelected?.loading ?? false;
 
   async function fetchLive(id: string) {
-    setLiveLoading(true);
-    setLiveError(null);
+    setLiveState({ accountId: id, loading: true });
     try {
       const res = await fetch(`/api/analytics/live?account_id=${id}`);
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Falha ao buscar dados ao vivo");
-      if (selectedAccountRef.current !== id) return; // conta foi trocada antes da resposta chegar
-      setLive(data);
+      setLiveState((prev) => (prev?.accountId === id ? { accountId: id, data, loading: false } : prev));
     } catch (err) {
-      if (selectedAccountRef.current !== id) return;
-      setLiveError(err instanceof Error ? err.message : "Falha ao buscar dados ao vivo");
-    } finally {
-      if (selectedAccountRef.current === id) setLiveLoading(false);
+      const message = err instanceof Error ? err.message : "Falha ao buscar dados ao vivo";
+      setLiveState((prev) => (prev?.accountId === id ? { accountId: id, error: message, loading: false } : prev));
     }
   }
 
@@ -125,9 +128,6 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (!accountId) return;
-    setLive(null);
-    setLiveError(null);
-    setLiveLoading(false);
     fetch(`/api/analytics?account_id=${accountId}`)
       .then((res) => res.json())
       .then((data) => {

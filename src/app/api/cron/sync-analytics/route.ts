@@ -7,6 +7,8 @@ import { mapWithConcurrency } from "@/lib/concurrency";
 
 export const maxDuration = 60;
 
+const SYNC_WINDOW_DAYS = 30;
+
 /** Runs a few times a day. Snapshots account-level insights and refreshes per-post engagement. */
 export async function GET(req: NextRequest) {
   if (!isAuthorizedCronRequest(req)) {
@@ -46,13 +48,30 @@ export async function GET(req: NextRequest) {
     }
   });
 
+  // Only posts published recently keep changing meaningfully; older ones keep their last saved numbers.
+  // This also keeps the run inside the 60s limit as the number of published posts grows.
+  const since = new Date(Date.now() - SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const { data: publishedPosts, error: postsError } = await supabase
     .from("posts")
     .select("id, ig_media_id, accounts(access_token_encrypted)")
     .eq("status", "published")
-    .not("ig_media_id", "is", null);
+    .not("ig_media_id", "is", null)
+    .gte("published_at", since);
 
   if (postsError) return NextResponse.json({ error: postsError.message }, { status: 500 });
+
+  // One analytics row per post per (UTC) day: today's existing rows get updated instead of piling up.
+  const todayRowByPost = new Map<string, string>();
+  for (let from = 0; ; from += 1000) {
+    const { data: rows, error: rowsError } = await supabase
+      .from("post_analytics")
+      .select("id, post_id")
+      .gte("fetched_at", `${today}T00:00:00.000Z`)
+      .range(from, from + 999);
+    if (rowsError) return NextResponse.json({ error: rowsError.message }, { status: 500 });
+    for (const row of rows ?? []) todayRowByPost.set(row.post_id, row.id);
+    if (!rows || rows.length < 1000) break;
+  }
 
   const postResults = await mapWithConcurrency(publishedPosts ?? [], 8, async (post) => {
     const account = post.accounts as unknown as { access_token_encrypted: string } | null;
@@ -62,15 +81,21 @@ export async function GET(req: NextRequest) {
       const accessToken = decryptToken(account.access_token_encrypted);
       const insights = await getMediaInsights(post.ig_media_id, accessToken);
 
-      await supabase.from("post_analytics").insert({
-        post_id: post.id,
+      const values = {
         likes: insights.likes ?? null,
         comments: insights.comments ?? null,
         shares: insights.shares ?? null,
         saves: insights.saved ?? null,
         reach: insights.reach ?? null,
         plays: insights.plays ?? null,
-      });
+        fetched_at: new Date().toISOString(),
+      };
+
+      const existingRowId = todayRowByPost.get(post.id);
+      const { error: writeError } = existingRowId
+        ? await supabase.from("post_analytics").update(values).eq("id", existingRowId)
+        : await supabase.from("post_analytics").insert({ post_id: post.id, ...values });
+      if (writeError) throw new Error(writeError.message);
 
       return { postId: post.id, status: "ok" };
     } catch (err) {

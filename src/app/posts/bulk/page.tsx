@@ -63,7 +63,7 @@ export default function BulkPostPage() {
     return () => {
       if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [coverPreviewUrl]);
 
   useEffect(() => {

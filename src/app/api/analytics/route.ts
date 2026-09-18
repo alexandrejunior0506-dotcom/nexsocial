@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
         .eq("account_id", accountId)
         .eq("status", "published")
         .order("published_at", { ascending: false })
-        .order("fetched_at", { referencedTable: "post_analytics", ascending: false }),
+        .order("fetched_at", { referencedTable: "post_analytics", ascending: false })
+        .limit(1, { referencedTable: "post_analytics" }),
     ]);
 
   if (snapshotsError) return NextResponse.json({ error: snapshotsError.message }, { status: 500 });

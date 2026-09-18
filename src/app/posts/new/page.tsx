@@ -53,14 +53,14 @@ export default function NewPostPage() {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [previewUrl]);
 
   useEffect(() => {
     return () => {
       if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [coverPreviewUrl]);
 
   useEffect(() => {
