@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { Skeleton } from "@/components/skeleton";
+import { DayEngagement } from "@/components/day-engagement";
 
 interface AccountRanking {
   id: string;
@@ -159,6 +160,8 @@ export default function AnalyticsPage() {
   return (
     <AppShell>
       <h1 className="text-2xl font-semibold">Analytics</h1>
+
+      <DayEngagement />
 
       {overviewLoading ? (
         <div className="mt-6 space-y-3">
