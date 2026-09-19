@@ -4,6 +4,7 @@ import { decryptToken } from "@/lib/crypto";
 import { getAccountInsights, getMediaInsights } from "@/lib/instagram/graph-api";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 import { mapWithConcurrency } from "@/lib/concurrency";
+import { cleanupPublishedVideos } from "@/lib/storage-cleanup";
 
 export const maxDuration = 60;
 
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const startedAt = Date.now();
   const supabase = createServiceClient();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -104,5 +106,18 @@ export async function GET(req: NextRequest) {
     }
   });
 
-  return NextResponse.json({ accounts: accountResults, posts: postResults });
+  // Housekeeping piggybacking on this regular run: free storage used by already-published videos.
+  // Isolated so a cleanup problem can never affect the analytics result above.
+  let cleanup: Awaited<ReturnType<typeof cleanupPublishedVideos>> | { error: string } | { skipped: string };
+  if (Date.now() - startedAt > 45_000) {
+    cleanup = { skipped: "sem tempo restante nesta execução" };
+  } else {
+    try {
+      cleanup = await cleanupPublishedVideos(supabase);
+    } catch (err) {
+      cleanup = { error: err instanceof Error ? err.message : "Erro desconhecido" };
+    }
+  }
+
+  return NextResponse.json({ accounts: accountResults, posts: postResults, cleanup });
 }

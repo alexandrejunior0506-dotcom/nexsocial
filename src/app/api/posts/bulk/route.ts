@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 
 const WINDOW_START_MIN = 8 * 60; // 08:00
 const WINDOW_END_MIN = 23 * 60; // 23:00
+const MAX_POSTS_PER_DAY = 12;
 
 function brasiliaDateStr(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "account_id e video_urls são obrigatórios" }, { status: 400 });
   }
 
-  const postsPerDay = Math.max(1, Math.min(10, Number(posts_per_day) || 3));
+  const postsPerDay = Math.max(1, Math.min(MAX_POSTS_PER_DAY, Number(posts_per_day) || 3));
 
   const todayStr = brasiliaDateStr(new Date());
   if (start_date && (!/^\d{4}-\d{2}-\d{2}$/.test(start_date) || start_date < todayStr)) {
@@ -70,7 +71,10 @@ export async function POST(req: NextRequest) {
     const dayStr = brasiliaDateStr(dayDate);
 
     const segStart = WINDOW_START_MIN + slot * segmentSize;
-    const randomOffset = Math.floor(Math.random() * segmentSize);
+    // Keep the random pick away from the segment edges so two posts of the same day are never
+    // back-to-back (at least ~40% of a segment apart), which matters with many posts per day.
+    const margin = segmentSize * 0.2;
+    const randomOffset = Math.floor(margin + Math.random() * (segmentSize - 2 * margin));
     const minuteOfDay = Math.floor(segStart + randomOffset);
 
     let cursor = new Date(`${dayStr}T${pad(Math.floor(minuteOfDay / 60))}:${pad(minuteOfDay % 60)}:00-03:00`);

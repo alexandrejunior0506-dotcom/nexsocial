@@ -39,7 +39,7 @@ export default function BulkPostPage() {
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
   const [existingCoverUrl, setExistingCoverUrl] = useState<string | null>(null);
   const [coverRemoved, setCoverRemoved] = useState(false);
-  const [postsPerDay, setPostsPerDay] = useState(3);
+  const [postsPerDay, setPostsPerDay] = useState(12);
   const [startDate, setStartDate] = useState("");
   const [dragging, setDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -438,11 +438,17 @@ export default function BulkPostPage() {
           <input
             type="number"
             min={1}
-            max={10}
+            max={12}
             value={postsPerDay}
             onChange={(e) => setPostsPerDay(Number(e.target.value))}
             className="w-24 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white outline-none focus:border-sky-500"
           />
+          {videos.length > 0 && postsPerDay >= 1 && (
+            <p className="text-xs text-sky-400">
+              {videos.length} vídeo(s) a {postsPerDay} por dia = {Math.ceil(videos.length / postsPerDay)} dia(s) de
+              publicação.
+            </p>
+          )}
           <p className="text-xs text-[var(--muted)]">
             {startDate
               ? "Data de início escolhida abaixo — os horários dentro de cada dia continuam automáticos."
