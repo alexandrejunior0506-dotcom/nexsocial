@@ -5,6 +5,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+const TZ = "America/Sao_Paulo";
+
 const STATUS_DOT: Record<string, string> = {
   scheduled: "bg-sky-500",
   processing: "bg-yellow-500",
@@ -29,12 +31,22 @@ interface AccountRef {
 
 export default async function DashboardPage() {
   const supabase = createServiceClient();
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  // This page renders on the server (UTC); day/month boundaries and displayed times must follow Brasília.
+  const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date());
+  const dayStart = new Date(`${todayStr}T00:00:00-03:00`);
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+  const startOfMonth = new Date(`${todayStr.slice(0, 8)}01T00:00:00-03:00`);
 
-  const [{ data: accounts }, { data: upcoming }, { count: publishedThisMonth }, { data: publishedPosts }] =
-    await Promise.all([
+  const [
+    { data: accounts },
+    { data: upcoming },
+    { count: publishedThisMonth },
+    { data: publishedPosts },
+    { count: upcomingTotal },
+    { data: todayPosts },
+    { count: failedTotal },
+    { data: lastPublished },
+  ] = await Promise.all([
       supabase.from("accounts").select("id, persona_name, ig_username, profile_picture_url"),
       supabase
         .from("posts")
@@ -51,8 +63,35 @@ export default async function DashboardPage() {
         .from("posts")
         .select("account_id, post_analytics(likes, comments, shares, saves, fetched_at)")
         .eq("status", "published")
-        .order("fetched_at", { referencedTable: "post_analytics", ascending: false }),
+        .order("fetched_at", { referencedTable: "post_analytics", ascending: false })
+        .limit(1, { referencedTable: "post_analytics" }),
+      supabase.from("posts").select("id", { count: "exact", head: true }).in("status", ["scheduled", "processing"]),
+      supabase
+        .from("posts")
+        .select("account_id, status")
+        .gte("scheduled_at", dayStart.toISOString())
+        .lt("scheduled_at", dayEnd.toISOString()),
+      supabase.from("posts").select("id", { count: "exact", head: true }).eq("status", "failed"),
+      supabase
+        .from("posts")
+        .select("id, published_at, accounts(persona_name)")
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(5),
     ]);
+
+  const todayByAccount = new Map<string, { published: number; pending: number; failed: number }>();
+  for (const post of todayPosts ?? []) {
+    const row = todayByAccount.get(post.account_id) ?? { published: 0, pending: 0, failed: 0 };
+    if (post.status === "published") row.published++;
+    else if (post.status === "failed") row.failed++;
+    else row.pending++;
+    todayByAccount.set(post.account_id, row);
+  }
+  const todayTotals = [...todayByAccount.values()].reduce(
+    (t, r) => ({ published: t.published + r.published, pending: t.pending + r.pending, failed: t.failed + r.failed }),
+    { published: 0, pending: 0, failed: 0 },
+  );
 
   const engagementByAccount = new Map<string, number>();
   for (const post of publishedPosts ?? []) {
@@ -86,7 +125,7 @@ export default async function DashboardPage() {
         <StatCard
           delay={0.05}
           label="Próximos agendamentos"
-          value={upcoming?.length ?? 0}
+          value={upcomingTotal ?? 0}
           href="/calendar"
           cta="Ver calendário"
           icon={<CalendarIcon className="h-5 w-5" />}
@@ -103,7 +142,64 @@ export default async function DashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium">Hoje</h2>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <TodayStat label="Publicados hoje" value={todayTotals.published} tone="text-green-400" />
+            <TodayStat label="Ainda vão sair hoje" value={todayTotals.pending} tone="text-sky-400" />
+            <TodayStat
+              label="Falhas (total)"
+              value={failedTotal ?? 0}
+              tone={(failedTotal ?? 0) > 0 ? "text-red-400" : "text-neutral-400"}
+            />
+          </div>
+          <div className="mt-3 space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            {((accounts ?? []) as AccountRef[]).map((acc) => {
+              const row = todayByAccount.get(acc.id) ?? { published: 0, pending: 0, failed: 0 };
+              const total = row.published + row.pending + row.failed;
+              return (
+                <div key={acc.id} className="flex items-center gap-3">
+                  <p className="w-36 shrink-0 truncate text-sm font-medium">{acc.persona_name}</p>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-hover)]">
+                    <div
+                      className="h-full rounded-full bg-green-500"
+                      style={{ width: `${total ? (row.published / total) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="w-28 shrink-0 text-right text-sm text-[var(--muted)]">
+                    {total === 0 ? "nada hoje" : `${row.published} de ${total} publicados`}
+                  </span>
+                  {row.failed > 0 && <span className="shrink-0 text-xs text-red-400">{row.failed} falhou</span>}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="text-sm text-[var(--muted)]">Últimos publicados</p>
+            <div className="mt-2 space-y-1">
+              {(lastPublished ?? []).length === 0 && <p className="text-sm text-neutral-500">Nenhum ainda.</p>}
+              {(lastPublished ?? []).map((post) => (
+                <div key={post.id} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    {(post.accounts as unknown as { persona_name: string } | null)?.persona_name}
+                  </span>
+                  <span className="text-neutral-500">
+                    {post.published_at
+                      ? new Date(post.published_at).toLocaleString("pt-BR", {
+                          timeZone: TZ,
+                          day: "2-digit",
+                          month: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-8 flex items-center justify-between">
             <h2 className="text-lg font-medium">Próximos agendamentos</h2>
             <Link
               href="/posts/new"
@@ -138,6 +234,7 @@ export default async function DashboardPage() {
                 </div>
                 <p className="shrink-0 text-sm text-neutral-500">
                   {new Date(post.scheduled_at).toLocaleString("pt-BR", {
+                    timeZone: TZ,
                     day: "2-digit",
                     month: "2-digit",
                     hour: "2-digit",
@@ -213,6 +310,15 @@ export default async function DashboardPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+function TodayStat({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <p className="text-xs text-[var(--muted)]">{label}</p>
+      <p className={`mt-1 text-2xl font-semibold ${tone}`}>{value}</p>
+    </div>
   );
 }
 
