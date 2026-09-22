@@ -6,57 +6,101 @@ import { usePathname } from "next/navigation";
 import { signOutAction } from "@/lib/actions/sign-out";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
-  { href: "/posts/new", label: "Agendar post", icon: PlusIcon },
-  { href: "/posts/bulk", label: "Agendar em lote", icon: LayersIcon },
+  { href: "/dashboard", label: "Painel", icon: HomeIcon },
+  { href: "/posts/new", label: "Novo post", icon: PlusIcon },
+  { href: "/posts/bulk", label: "Lote", icon: LayersIcon },
   { href: "/calendar", label: "Calendário", icon: CalendarIcon },
-  { href: "/accounts", label: "Contas", icon: UsersIcon },
   { href: "/analytics", label: "Analytics", icon: ChartIcon },
+  { href: "/accounts", label: "Contas", icon: UsersIcon },
 ];
+
+function Logo() {
+  return (
+    <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5 px-1">
+      <Image src="/logo-icon.jpg" alt="NexSocial" width={28} height={28} className="rounded-md" />
+      <span className="nex-mono text-[15px] font-semibold tracking-tight">
+        Nex<span className="nex-gradient-text">Social</span>
+      </span>
+    </Link>
+  );
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-6">
-          <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-            <Image src="/logo-icon.jpg" alt="NexSocial" width={30} height={30} className="rounded-md" />
-            <span className="text-lg font-semibold">
-              Nex<span className="nex-gradient-text">Social</span>
-            </span>
-          </Link>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] sm:flex">
+      {/* Desktop/tablet: fixed left sidebar — the dense "ops panel" the rest of the app is built around. */}
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-56 flex-col border-r border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur sm:flex">
+        <div className="flex h-16 items-center border-b border-[var(--border)] px-4">
+          <Logo />
+        </div>
 
-          <nav className="flex flex-1 items-center gap-1">
-            {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex flex-col items-center gap-1 rounded-md px-4 py-2 text-xs font-medium transition-colors ${
-                    active
-                      ? "text-sky-400"
-                      : "text-[var(--muted)] hover:text-white"
+        <nav className="flex flex-1 flex-col gap-0.5 p-3">
+          {NAV_ITEMS.map((item) => {
+            const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-[var(--surface-hover)] text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <span
+                  className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full nex-gradient-bg transition-opacity ${
+                    active ? "opacity-100" : "opacity-0"
                   }`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
-                  {active && <span className="mt-0.5 h-0.5 w-6 rounded-full nex-gradient-bg" />}
-                </Link>
-              );
-            })}
-          </nav>
+                />
+                <item.icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-[var(--accent-solid)]" : ""}`} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-          <form action={signOutAction} className="shrink-0">
-            <button className="rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-[var(--muted)] hover:border-red-900/60 hover:text-red-400">
+        <div className="border-t border-[var(--border)] p-3">
+          <form action={signOutAction}>
+            <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-[var(--muted)] hover:bg-red-950/30 hover:text-red-400">
+              <LogoutIcon className="h-[18px] w-[18px] shrink-0" />
               Sair
             </button>
           </form>
         </div>
+      </aside>
+
+      {/* Mobile: slim top bar, icon nav scrolls horizontally. */}
+      <header className="sticky top-0 z-20 flex h-14 items-center gap-1 overflow-x-auto border-b border-[var(--border)] bg-[var(--surface)]/95 px-3 backdrop-blur sm:hidden">
+        <Logo />
+        <nav className="ml-2 flex items-center gap-0.5">
+          {NAV_ITEMS.map((item) => {
+            const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={item.label}
+                className={`flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                  active ? "bg-[var(--surface-hover)] text-[var(--accent-solid)]" : "text-[var(--muted)]"
+                }`}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+              </Link>
+            );
+          })}
+        </nav>
+        <form action={signOutAction} className="ml-auto shrink-0">
+          <button className="rounded-md border border-[var(--border)] px-2.5 py-1.5 text-xs text-[var(--muted)]">
+            Sair
+          </button>
+        </form>
       </header>
-      <main className="mx-auto max-w-7xl p-8">{children}</main>
+
+      <main className="min-w-0 flex-1 p-5 sm:ml-56 sm:p-8">
+        <div className="mx-auto max-w-7xl">{children}</div>
+      </main>
     </div>
   );
 }
@@ -113,6 +157,15 @@ function ChartIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
       <path d="M4 20V10M12 20V4M20 20v-7" strokeLinecap="round" />
       <path d="M3 20h18" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function LogoutIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m16 17 5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

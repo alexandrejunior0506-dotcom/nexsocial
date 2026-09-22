@@ -303,7 +303,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
 
-                <span className="shrink-0 text-sm text-[var(--muted)]">{acc.engagement}</span>
+                <span className="nex-mono shrink-0 text-sm text-[var(--muted)]">{acc.engagement}</span>
               </div>
             ))}
           </div>
@@ -317,7 +317,7 @@ function TodayStat({ label, value, tone }: { label: string; value: number; tone:
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <p className="text-xs text-[var(--muted)]">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold ${tone}`}>{value}</p>
+      <p className={`nex-mono mt-1 text-2xl font-semibold ${tone}`}>{value}</p>
     </div>
   );
 }
@@ -346,7 +346,7 @@ function StatCard({
         <p className="text-sm text-[var(--muted)]">{label}</p>
         <span className="nex-gradient-text">{icon}</span>
       </div>
-      <p className="mt-2 text-3xl font-semibold">{value}</p>
+      <p className="nex-mono mt-2 text-3xl font-semibold">{value}</p>
       <Link href={href} className="mt-2 inline-block text-sm text-sky-400 hover:text-sky-300">
         {cta}
       </Link>

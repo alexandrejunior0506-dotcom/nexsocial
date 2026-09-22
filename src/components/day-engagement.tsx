@@ -249,7 +249,7 @@ export function DayEngagement() {
                   </div>
 
                   <div className="mt-3 overflow-x-auto">
-                    <table className="w-full min-w-[520px] text-sm">
+                    <table className="nex-mono w-full min-w-[520px] text-sm">
                       <thead>
                         <tr className="text-left text-xs text-[var(--muted)]">
                           <th className="py-1 pr-3 font-normal">Vídeo</th>
@@ -292,7 +292,7 @@ function Total({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
       <p className="text-xs text-[var(--muted)]">{label}</p>
-      <p className="nex-gradient-text mt-1 text-xl font-semibold">{value.toLocaleString("pt-BR")}</p>
+      <p className="nex-gradient-text nex-mono mt-1 text-xl font-semibold">{value.toLocaleString("pt-BR")}</p>
     </div>
   );
 }

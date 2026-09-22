@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
                     />
                   </div>
                 </div>
-                <span className="shrink-0 text-sm text-[var(--muted)]">{acc.engagement}</span>
+                <span className="nex-mono shrink-0 text-sm text-[var(--muted)]">{acc.engagement}</span>
               </button>
             ))}
           </div>
@@ -363,7 +363,7 @@ function MiniStat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
       <p className="text-xs text-[var(--muted)]">{label}</p>
-      <p className="nex-gradient-text mt-1 text-xl font-semibold">{value}</p>
+      <p className="nex-gradient-text nex-mono mt-1 text-xl font-semibold">{value}</p>
     </div>
   );
 }
