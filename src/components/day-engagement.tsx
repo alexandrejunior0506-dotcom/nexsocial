@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Skeleton } from "@/components/skeleton";
+import { EmptyState } from "@/components/empty-state";
 
 const TZ = "America/Sao_Paulo";
 
@@ -202,9 +203,9 @@ export function DayEngagement() {
       )}
 
       {!loading && !loaded?.error && posts.length === 0 && (
-        <p className="mt-4 rounded-xl border border-dashed border-[var(--border)] p-6 text-center text-[var(--muted)]">
-          Nenhum vídeo publicado nesse dia.
-        </p>
+        <div className="mt-4">
+          <EmptyState variant="video" title="Nenhum vídeo publicado nesse dia" description="Escolha outra data ou confira o calendário." compact />
+        </div>
       )}
 
       {!loading && posts.length > 0 && (

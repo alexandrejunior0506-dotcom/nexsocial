@@ -89,11 +89,66 @@ button {
 
 .nex-card {
   transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.03) inset, 0 12px 24px -16px rgba(0, 0, 0, 0.6);
 }
 
 .nex-card:hover {
   border-color: var(--accent-from);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), 0 8px 24px -8px rgba(29, 78, 216, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 0 0 1px rgba(56, 189, 248, 0.15),
+    0 16px 32px -16px rgba(29, 78, 216, 0.45);
+}
+
+/* Small uppercase micro-label above a section title — the "premium dashboard" tell. */
+.nex-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-solid);
+}
+
+.nex-eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-from), var(--accent-to));
+}
+
+/* Soft tinted circle behind an icon — used on stat cards / list rows instead of a bare glyph. */
+.nex-icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.65rem;
+  background: linear-gradient(155deg, rgba(56, 189, 248, 0.18), rgba(5, 98, 251, 0.08));
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  color: var(--accent-solid);
+}
+
+/* Shimmering sweep for loading placeholders, instead of a flat pulse. */
+@keyframes nex-shimmer {
+  from {
+    background-position: -300px 0;
+  }
+  to {
+    background-position: 300px 0;
+  }
+}
+
+.nex-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-hover) 0%,
+    rgba(56, 189, 248, 0.12) 50%,
+    var(--surface-hover) 100%
+  );
+  background-size: 300px 100%;
+  animation: nex-shimmer 1.6s ease-in-out infinite;
 }
 
 main {

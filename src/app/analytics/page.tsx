@@ -15,6 +15,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { Skeleton } from "@/components/skeleton";
 import { DayEngagement } from "@/components/day-engagement";
+import { EmptyState } from "@/components/empty-state";
 
 interface AccountRanking {
   id: string;
@@ -159,6 +160,7 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell>
+      <span className="nex-eyebrow">Desempenho</span>
       <h1 className="text-2xl font-semibold">Analytics</h1>
 
       <DayEngagement />
@@ -198,9 +200,7 @@ export default function AnalyticsPage() {
           <p className="text-sm text-[var(--muted)]">Selecione uma conta para ver os detalhes.</p>
           <div className="mt-3 space-y-2">
             {ranking.length === 0 && (
-              <p className="rounded-xl border border-dashed border-[var(--border)] p-6 text-center text-[var(--muted)]">
-                Nenhuma conta conectada ainda.
-              </p>
+              <EmptyState variant="accounts" title="Nenhuma conta conectada ainda" actionHref="/accounts" actionLabel="Conectar conta" />
             )}
             {ranking.map((acc, i) => (
               <button
@@ -306,7 +306,9 @@ export default function AnalyticsPage() {
 
               <h3 className="mt-6 text-sm font-medium text-neutral-300">Posts publicados</h3>
               <div className="mt-2 space-y-2">
-                {posts.length === 0 && <p className="text-neutral-400">Nenhum post publicado ainda.</p>}
+                {posts.length === 0 && (
+                  <EmptyState variant="video" title="Nenhum post publicado ainda" compact />
+                )}
                 {posts.map((post, i) => {
                   const cached = post.post_analytics?.[0];
                   const liveMetrics = live?.posts.find((p) => p.id === post.id);

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { EmptyState } from "@/components/empty-state";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -111,7 +112,8 @@ export default async function DashboardPage() {
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <span className="nex-eyebrow">Visão geral</span>
+      <h1 className="text-2xl font-semibold">Painel</h1>
 
       <div className="mt-6 grid grid-cols-3 gap-4">
         <StatCard
@@ -142,6 +144,7 @@ export default async function DashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
+          <span className="nex-eyebrow">Agora</span>
           <h2 className="text-lg font-medium">Hoje</h2>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <TodayStat label="Publicados hoje" value={todayTotals.published} tone="text-green-400" />
@@ -200,7 +203,10 @@ export default async function DashboardPage() {
           </div>
 
           <div className="mt-8 flex items-center justify-between">
-            <h2 className="text-lg font-medium">Próximos agendamentos</h2>
+            <div>
+              <span className="nex-eyebrow">Fila</span>
+              <h2 className="text-lg font-medium">Próximos agendamentos</h2>
+            </div>
             <Link
               href="/posts/new"
               className="nex-gradient-bg rounded-md px-3 py-1.5 text-sm font-medium text-white"
@@ -211,9 +217,14 @@ export default async function DashboardPage() {
 
           <div className="mt-3 space-y-2">
             {(upcoming ?? []).length === 0 && (
-              <p className="rounded-xl border border-dashed border-[var(--border)] p-6 text-center text-[var(--muted)]">
-                Nada agendado. Crie um novo post.
-              </p>
+              <EmptyState
+                variant="calendar"
+                title="Nada agendado"
+                description="Agende um post ou suba vários de uma vez pelo agendamento em lote."
+                actionHref="/posts/new"
+                actionLabel="+ Novo post"
+                compact
+              />
             )}
             {(upcoming ?? []).map((post, i) => (
               <div
@@ -247,10 +258,11 @@ export default async function DashboardPage() {
         </div>
 
         <div className="lg:col-span-2">
+          <span className="nex-eyebrow">Ranking</span>
           <h2 className="text-lg font-medium">Top contas por engajamento</h2>
           <div className="mt-3 space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
             {topAccounts.length === 0 && (
-              <p className="text-sm text-[var(--muted)]">Conecte uma conta para ver o ranking.</p>
+              <EmptyState variant="accounts" title="Conecte uma conta" description="O ranking aparece aqui assim que houver contas conectadas." compact />
             )}
             {!hasEngagementData && topAccounts.length > 0 && (
               <p className="text-sm text-[var(--muted)]">
@@ -344,13 +356,22 @@ function StatCard({
     >
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--muted)]">{label}</p>
-        <span className="nex-gradient-text">{icon}</span>
+        <span className="nex-icon-chip h-9 w-9">{icon}</span>
       </div>
       <p className="nex-mono mt-2 text-3xl font-semibold">{value}</p>
-      <Link href={href} className="mt-2 inline-block text-sm text-sky-400 hover:text-sky-300">
+      <Link href={href} className="mt-2 inline-flex items-center gap-1 text-sm text-sky-400 hover:text-sky-300">
         {cta}
+        <ArrowRightIcon className="h-3.5 w-3.5" />
       </Link>
     </div>
+  );
+}
+
+function ArrowRightIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

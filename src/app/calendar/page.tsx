@@ -16,6 +16,7 @@ import {
 import { ptBR } from "date-fns/locale";
 import { AppShell } from "@/components/app-shell";
 import { DateTimePicker } from "@/components/date-time-picker";
+import { EmptyState } from "@/components/empty-state";
 import { Skeleton } from "@/components/skeleton";
 import { useUi } from "@/components/ui-provider";
 
@@ -306,7 +307,13 @@ export default function CalendarPage() {
       )}
 
       {!loading && posts.length === 0 && (
-        <p className="mt-6 text-[var(--muted)]">Nenhum post agendado ainda.</p>
+        <EmptyState
+          variant="calendar"
+          title="Nenhum post agendado ainda"
+          description="Agende um vídeo pra ver o calendário ganhar vida."
+          actionHref="/posts/new"
+          actionLabel="+ Novo post"
+        />
       )}
 
       {editingPost && (

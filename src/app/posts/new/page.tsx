@@ -189,6 +189,7 @@ export default function NewPostPage() {
 
   return (
     <AppShell>
+      <span className="nex-eyebrow">Publicação</span>
       <h1 className="text-2xl font-semibold">Novo post</h1>
 
       <form onSubmit={handleSubmit} className="mt-6 grid max-w-4xl gap-8 md:grid-cols-[1fr_auto]">

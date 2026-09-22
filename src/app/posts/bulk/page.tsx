@@ -236,6 +236,7 @@ export default function BulkPostPage() {
 
   return (
     <AppShell>
+      <span className="nex-eyebrow">Publicação em massa</span>
       <h1 className="text-2xl font-semibold">Agendar em lote</h1>
       <p className="mt-1 text-sm text-[var(--muted)]">
         Escolha uma conta, suba vários vídeos de uma vez com uma legenda e uma capa únicas — o sistema

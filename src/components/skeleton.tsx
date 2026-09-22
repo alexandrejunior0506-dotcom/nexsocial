@@ -1,5 +1,5 @@
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-[var(--surface-hover)] ${className}`} />;
+  return <div className={`nex-skeleton rounded-md ${className}`} />;
 }
 
 export function StatCardSkeleton() {

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { EmptyState } from "@/components/empty-state";
 import { RowSkeleton } from "@/components/skeleton";
 import { useUi } from "@/components/ui-provider";
 
@@ -127,7 +128,10 @@ function AccountsContent() {
   return (
     <AppShell>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Contas conectadas</h1>
+        <div>
+          <span className="nex-eyebrow">Instagram</span>
+          <h1 className="text-2xl font-semibold">Contas conectadas</h1>
+        </div>
         <a
           href="/api/instagram/oauth"
           className="nex-gradient-bg rounded-md px-4 py-2 text-sm font-medium text-white"
@@ -144,10 +148,13 @@ function AccountsContent() {
       )}
 
       {!loading && accounts.length === 0 && (
-        <p className="mt-6 rounded-xl border border-dashed border-[var(--border)] p-6 text-center text-[var(--muted)]">
-          Nenhuma conta conectada ainda. Clique em &quot;Conectar conta do Instagram&quot; para
-          vincular sua primeira conta Business/Creator.
-        </p>
+        <div className="mt-6">
+          <EmptyState
+            variant="accounts"
+            title="Nenhuma conta conectada ainda"
+            description='Clique em "Conectar conta do Instagram" para vincular sua primeira conta Business/Creator.'
+          />
+        </div>
       )}
 
       <div className="mt-6 space-y-3">
