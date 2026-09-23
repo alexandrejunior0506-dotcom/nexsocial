@@ -13,6 +13,7 @@ create table if not exists accounts (
   status text not null default 'active' check (status in ('active', 'error')),
   last_checked_at timestamptz,
   last_error text,
+  default_caption text,
   created_at timestamptz not null default now()
 );
 
@@ -60,3 +61,6 @@ create table if not exists post_analytics (
 );
 
 create index if not exists post_analytics_post_id_idx on post_analytics (post_id);
+
+-- Migração (bancos já criados antes desta versão): legenda fixa por conta.
+alter table accounts add column if not exists default_caption text;

@@ -18,7 +18,10 @@ interface Account {
   last_checked_at: string | null;
   last_error: string | null;
   created_at: string;
+  default_caption?: string | null;
 }
+
+const CAPTION_LIMIT = 2200;
 
 function tokenExpiryInfo(expiresAt: string) {
   const daysLeft = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000);
@@ -46,6 +49,9 @@ function AccountsContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [captionAccount, setCaptionAccount] = useState<Account | null>(null);
+  const [captionDraft, setCaptionDraft] = useState("");
+  const [savingCaption, setSavingCaption] = useState(false);
 
   async function load() {
     const res = await fetch("/api/accounts");
@@ -106,6 +112,27 @@ function AccountsContent() {
       load();
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Falha ao desconectar a conta", "error");
+    }
+  }
+
+  async function saveCaption(clear = false) {
+    if (!captionAccount) return;
+    setSavingCaption(true);
+    try {
+      const res = await fetch("/api/accounts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: captionAccount.id, default_caption: clear ? null : captionDraft }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Falha ao salvar a legenda fixa");
+      showToast(clear || !captionDraft.trim() ? "Legenda fixa removida." : "Legenda fixa salva.");
+      setCaptionAccount(null);
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao salvar a legenda fixa", "error");
+    } finally {
+      setSavingCaption(false);
     }
   }
 
@@ -215,6 +242,11 @@ function AccountsContent() {
                 <p className={`text-xs ${tokenExpiryInfo(acc.token_expires_at).color}`}>
                   {tokenExpiryInfo(acc.token_expires_at).label} ({new Date(acc.token_expires_at).toLocaleDateString("pt-BR")})
                 </p>
+                {acc.default_caption && (
+                  <p className="mt-1 max-w-sm truncate text-xs text-[var(--muted)]" title={acc.default_caption}>
+                    📝 Legenda fixa: {acc.default_caption.replace(/\s+/g, " ")}
+                  </p>
+                )}
                 {acc.status === "error" && acc.last_error && (
                   <p className="mt-1 max-w-xs text-xs text-red-400">{acc.last_error}</p>
                 )}
@@ -247,6 +279,15 @@ function AccountsContent() {
                   >
                     Renomear
                   </button>
+                  <button
+                    onClick={() => {
+                      setCaptionAccount(acc);
+                      setCaptionDraft(acc.default_caption ?? "");
+                    }}
+                    className="rounded-md border border-[var(--border)] px-3 py-1 text-sm hover:bg-[var(--surface-hover)]"
+                  >
+                    Legenda fixa
+                  </button>
                 </>
               )}
               <button
@@ -259,6 +300,57 @@ function AccountsContent() {
           </div>
         ))}
       </div>
+      {captionAccount && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4 animate-fade-in">
+          <div className="mx-auto my-8 w-full max-w-lg rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Legenda fixa · {captionAccount.persona_name}</h3>
+              <button onClick={() => setCaptionAccount(null)} className="text-sm text-[var(--muted)] hover:text-white">
+                Fechar
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Essa legenda vem preenchida sozinha ao agendar vídeos dessa conta (você ainda pode editar na hora).
+            </p>
+            <div className="mt-4 flex items-center justify-between">
+              <label className="text-sm text-neutral-300">Legenda</label>
+              <span className={`text-xs ${captionDraft.length > CAPTION_LIMIT ? "text-red-400" : "text-[var(--muted)]"}`}>
+                {captionDraft.length}/{CAPTION_LIMIT}
+              </span>
+            </div>
+            <textarea
+              value={captionDraft}
+              onChange={(e) => setCaptionDraft(e.target.value)}
+              rows={9}
+              className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-white outline-none focus:border-sky-500"
+            />
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <button
+                onClick={() => saveCaption(true)}
+                disabled={savingCaption || !captionAccount.default_caption}
+                className="rounded-md border border-red-900/60 px-4 py-2 text-sm text-red-400 hover:bg-red-950/40 disabled:opacity-40"
+              >
+                Remover legenda fixa
+              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCaptionAccount(null)}
+                  className="rounded-md border border-[var(--border)] px-4 py-2 text-sm hover:bg-[var(--surface-hover)]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => saveCaption()}
+                  disabled={savingCaption || captionDraft.length > CAPTION_LIMIT}
+                  className="nex-gradient-bg rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {savingCaption ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

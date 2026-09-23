@@ -12,6 +12,7 @@ interface Account {
   persona_name: string;
   ig_username: string;
   profile_picture_url: string | null;
+  default_caption?: string | null;
 }
 
 const CAPTION_LIMIT = 2200;
@@ -26,6 +27,7 @@ export default function NewPostPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountId, setAccountId] = useState("");
   const [caption, setCaption] = useState("");
+  const [captionEdited, setCaptionEdited] = useState(false);
   const [scheduledAt, setScheduledAt] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -74,6 +76,8 @@ export default function NewPostPage() {
   }, [submitting]);
 
   const selectedAccount = accounts.find((a) => a.id === accountId);
+  // The account's fixed caption is pre-filled until the user types something of their own.
+  const effectiveCaption = captionEdited ? caption : (selectedAccount?.default_caption ?? "");
 
   function pickFile(picked: File | null) {
     if (picked) {
@@ -170,7 +174,7 @@ export default function NewPostPage() {
           account_id: accountId,
           video_url: videoUrl,
           cover_url: coverUrl,
-          caption,
+          caption: effectiveCaption,
           scheduled_at: new Date(scheduledAt).toISOString(),
         }),
       });
@@ -315,14 +319,17 @@ export default function NewPostPage() {
             <div className="flex items-center justify-between">
               <label className="text-sm text-neutral-300">Legenda</label>
               <span
-                className={`text-xs ${caption.length > CAPTION_LIMIT ? "text-red-400" : "text-[var(--muted)]"}`}
+                className={`text-xs ${effectiveCaption.length > CAPTION_LIMIT ? "text-red-400" : "text-[var(--muted)]"}`}
               >
-                {caption.length}/{CAPTION_LIMIT}
+                {effectiveCaption.length}/{CAPTION_LIMIT}
               </span>
             </div>
             <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
+              value={effectiveCaption}
+              onChange={(e) => {
+                setCaption(e.target.value);
+                setCaptionEdited(true);
+              }}
               rows={5}
               className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-white outline-none focus:border-sky-500"
             />
@@ -361,7 +368,7 @@ export default function NewPostPage() {
           <span className="text-xs text-[var(--muted)]">Prévia</span>
           <PhonePreview
             previewUrl={previewUrl}
-            caption={caption}
+            caption={effectiveCaption}
             username={selectedAccount?.ig_username ?? "sua_conta"}
             avatarUrl={selectedAccount?.profile_picture_url ?? null}
             personaInitial={selectedAccount?.persona_name.charAt(0).toUpperCase() ?? "?"}

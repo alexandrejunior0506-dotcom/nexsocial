@@ -11,6 +11,7 @@ interface Account {
   persona_name: string;
   ig_username: string;
   profile_picture_url: string | null;
+  default_caption?: string | null;
 }
 
 interface PostForDefaults {
@@ -33,6 +34,7 @@ export default function BulkPostPage() {
   const [accountId, setAccountId] = useState("");
   const [caption, setCaption] = useState("");
   const [suggestedCaption, setSuggestedCaption] = useState<string | null>(null);
+  const [suggestedIsFixed, setSuggestedIsFixed] = useState(false);
   const captionTouchedRef = useRef(false);
   const [videos, setVideos] = useState<File[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -68,7 +70,10 @@ export default function BulkPostPage() {
 
   useEffect(() => {
     captionTouchedRef.current = false;
-    setSuggestedCaption(null);
+    const fixedCaption = accounts.find((a) => a.id === accountId)?.default_caption ?? null;
+    setSuggestedIsFixed(!!fixedCaption);
+    setSuggestedCaption(fixedCaption);
+    setCaption(fixedCaption ?? "");
     setExistingCoverUrl(null);
     setCoverRemoved(false);
     pickCover(null);
@@ -81,11 +86,11 @@ export default function BulkPostPage() {
           .filter((p) => p.account_id === accountId)
           .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
-        const withCaption = ownPosts.find((p) => p.caption);
+        const withCaption = fixedCaption ? undefined : ownPosts.find((p) => p.caption);
         if (withCaption) {
           setSuggestedCaption(withCaption.caption);
           if (!captionTouchedRef.current) setCaption(withCaption.caption);
-        } else if (!captionTouchedRef.current) {
+        } else if (!fixedCaption && !captionTouchedRef.current) {
           setCaption("");
         }
 
@@ -423,13 +428,15 @@ export default function BulkPostPage() {
                 }}
                 className="text-sky-400 hover:text-sky-300"
               >
-                Usar a última legenda dessa conta
+                {suggestedIsFixed ? "Usar a legenda fixa da conta" : "Usar a última legenda dessa conta"}
               </button>
             )}
           </div>
           {suggestedCaption && caption === suggestedCaption && (
             <p className="text-xs text-[var(--muted)]">
-              Preenchido automaticamente com a última legenda usada nessa conta — edite à vontade.
+              {suggestedIsFixed
+                ? "Legenda fixa dessa conta (muda em Contas → Legenda fixa) — edite à vontade neste lote."
+                : "Preenchido automaticamente com a última legenda usada nessa conta — edite à vontade."}
             </p>
           )}
         </div>
