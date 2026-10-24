@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Chakra_Petch, Geist, JetBrains_Mono } from "next/font/google";
+import { Atmosphere } from "@/components/atmosphere";
+import { SpotlightProvider } from "@/components/spotlight-provider";
 import { UiProvider } from "@/components/ui-provider";
 import "./globals.css";
 
@@ -8,8 +10,16 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Títulos e marca (squared/techno, mesma família visual do BOTNITA).
+const display = Chakra_Petch({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
+// Números, horários e dados.
+const data = JetBrains_Mono({
+  variable: "--font-data",
   subsets: ["latin"],
 });
 
@@ -26,9 +36,11 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${display.variable} ${data.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <Atmosphere />
+        <SpotlightProvider />
         <UiProvider>{children}</UiProvider>
       </body>
     </html>

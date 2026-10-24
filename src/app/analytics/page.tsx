@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,7 +15,9 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { Skeleton } from "@/components/skeleton";
 import { DayEngagement } from "@/components/day-engagement";
+import { CountUp } from "@/components/count-up";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 
 interface AccountRanking {
   id: string;
@@ -160,8 +162,11 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell>
-      <span className="nex-eyebrow">Desempenho</span>
-      <h1 className="text-2xl font-semibold">Analytics</h1>
+      <PageHeader
+        eyebrow="Desempenho"
+        title="Analytics"
+        subtitle="Cada vídeo, cada conta: o que saiu, quanto alcançou e quanto engajou."
+      />
 
       <DayEngagement />
 
@@ -196,7 +201,8 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          <h2 className="mt-8 text-lg font-medium">Contas por engajamento</h2>
+          <span className="nex-eyebrow mt-10">Ranking</span>
+          <h2 className="mt-1.5 text-lg font-semibold">Contas por engajamento</h2>
           <p className="text-sm text-[var(--muted)]">Selecione uma conta para ver os detalhes.</p>
           <div className="mt-3 space-y-2">
             {ranking.length === 0 && (
@@ -207,10 +213,10 @@ export default function AnalyticsPage() {
                 key={acc.id}
                 onClick={() => setAccountId(acc.id === accountId ? "" : acc.id)}
                 style={{ animationDelay: `${i * 0.05}s` }}
-                className={`nex-rise-in flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                className={`nex-card nex-rise-in flex w-full items-center gap-3 rounded-[4px_16px_4px_16px] border p-3 text-left ${
                   accountId === acc.id
-                    ? "border-sky-500 bg-sky-950/20"
-                    : "border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)]"
+                    ? "border-sky-500 bg-sky-950/30 shadow-[0_0_28px_-10px_rgba(23,169,254,0.8)]"
+                    : "border-[var(--line)] bg-[var(--glass)]"
                 }`}
               >
                 {acc.profile_picture_url ? (
@@ -234,11 +240,8 @@ export default function AnalyticsPage() {
                       {acc.followers_count != null ? `${acc.followers_count} seguidores` : "sem dados"}
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-hover)]">
-                    <div
-                      className="nex-gradient-bg h-full rounded-full"
-                      style={{ width: `${Math.max(4, (acc.engagement / maxEngagement) * 100)}%` }}
-                    />
+                  <div className="nex-bar mt-1.5 !h-1.5">
+                    <i style={{ width: `${Math.max(4, (acc.engagement / maxEngagement) * 100)}%`, animationDelay: `${0.15 + i * 0.06}s` }} />
                   </div>
                 </div>
                 <span className="nex-mono shrink-0 text-sm text-[var(--muted)]">{acc.engagement}</span>
@@ -251,7 +254,10 @@ export default function AnalyticsPage() {
       {accountId && (
         <div className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-medium">Detalhes de {selected?.persona_name}</h2>
+            <div>
+              <span className="nex-eyebrow">Conta</span>
+              <h2 className="mt-1.5 text-xl font-semibold">Detalhes de {selected?.persona_name}</h2>
+            </div>
             <div className="flex items-center gap-2">
               {live && (
                 <span className="text-xs text-[var(--muted)]">
@@ -276,7 +282,7 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <>
-              <div className="mt-3 grid grid-cols-4 gap-3">
+              <div className="nex-stagger mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <MiniStat
                   label="Seguidores"
                   value={live?.account.followers_count ?? latestSnapshot?.followers_count ?? "-"}
@@ -289,22 +295,37 @@ export default function AnalyticsPage() {
                 />
               </div>
 
-              <div className="mt-4 h-72 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div className="nex-card nex-beam mt-4 h-80 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={snapshots}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1b2a42" />
-                    <XAxis dataKey="date" stroke="#8b98ad" fontSize={12} />
-                    <YAxis stroke="#8b98ad" fontSize={12} />
-                    <Tooltip contentStyle={{ background: "#0b1424", border: "1px solid #1b2a42" }} />
-                    <Legend />
-                    <Line type="monotone" dataKey="followers_count" name="Seguidores" stroke="#38bdf8" />
-                    <Line type="monotone" dataKey="reach" name="Alcance" stroke="#1d4ed8" />
-                    <Line type="monotone" dataKey="profile_views" name="Visitas ao perfil" stroke="#eab308" />
-                  </LineChart>
+                  <AreaChart data={snapshots} margin={{ top: 10, right: 8, left: -8, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="nexFillReach" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#17a9fe" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="#17a9fe" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="nexFillFollowers" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#6d8bff" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#6d8bff" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="rgba(100,150,255,0.12)" strokeDasharray="3 6" vertical={false} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: "#8a9bbd", fontSize: 11 }} dy={6} />
+                    <YAxis tickLine={false} axisLine={false} tick={{ fill: "#8a9bbd", fontSize: 11 }} />
+                    <Tooltip
+                      cursor={{ stroke: "rgba(110,170,255,0.3)" }}
+                      contentStyle={{ background: "#0a1224", border: "1px solid #1a2b4d", borderRadius: 12, color: "#f1f5fd" }}
+                      labelStyle={{ color: "#8a9bbd" }}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 12, color: "#8a9bbd" }} />
+                    <Area type="monotone" dataKey="reach" name="Alcance" stroke="#17a9fe" strokeWidth={2.5} fill="url(#nexFillReach)" animationDuration={1400} />
+                    <Area type="monotone" dataKey="followers_count" name="Seguidores" stroke="#6d8bff" strokeWidth={2} fill="url(#nexFillFollowers)" animationDuration={1600} />
+                    <Area type="monotone" dataKey="profile_views" name="Visitas ao perfil" stroke="#ffb547" strokeWidth={2} fill="none" animationDuration={1800} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
 
-              <h3 className="mt-6 text-sm font-medium text-neutral-300">Posts publicados</h3>
+              <span className="nex-eyebrow mt-8">Vídeos</span>
+              <h3 className="mt-1.5 text-base font-semibold">Posts publicados</h3>
               <div className="mt-2 space-y-2">
                 {posts.length === 0 && (
                   <EmptyState variant="video" title="Nenhum post publicado ainda" compact />
@@ -363,9 +384,11 @@ export default function AnalyticsPage() {
 
 function MiniStat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-      <p className="text-xs text-[var(--muted)]">{label}</p>
-      <p className="nex-gradient-text nex-mono mt-1 text-xl font-semibold">{value}</p>
+    <div className="nex-card nex-beam rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
+      <p className="nex-display text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">{label}</p>
+      <p className="nex-gradient-text nex-mono mt-2 text-2xl font-semibold leading-tight">
+        {typeof value === "number" ? <CountUp value={value} /> : value}
+      </p>
     </div>
   );
 }
