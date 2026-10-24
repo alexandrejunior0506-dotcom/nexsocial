@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { DateTimePicker } from "@/components/date-time-picker";
+import { PageHeader } from "@/components/page-header";
 import { useUi } from "@/components/ui-provider";
 
 interface Account {
@@ -193,8 +194,7 @@ export default function NewPostPage() {
 
   return (
     <AppShell>
-      <span className="nex-eyebrow">Publicação</span>
-      <h1 className="text-2xl font-semibold">Novo post</h1>
+      <PageHeader eyebrow="Publicação" title="Novo post" subtitle="Um vídeo, com capa e legenda, no horário que você escolher." />
 
       <form onSubmit={handleSubmit} className="mt-6 grid max-w-4xl gap-8 md:grid-cols-[1fr_auto]">
         <div className="space-y-4">

@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertCircle, Check } from "lucide-react";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 
 interface Toast {
@@ -43,33 +44,37 @@ export function UiProvider({ children }: { children: React.ReactNode }) {
     <UiContext.Provider value={{ showToast, confirm }}>
       {children}
 
-      <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`animate-toast-in pointer-events-auto flex items-center gap-2 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur ${
-              toast.type === "success"
-                ? "border-sky-900/60 bg-[var(--surface)]/95 text-white"
-                : "border-red-900/60 bg-red-950/90 text-red-200"
-            }`}
-          >
-            {toast.type === "success" ? (
-              <span className="nex-gradient-bg flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white">
-                ✓
+      <div className="pointer-events-none fixed bottom-20 right-4 z-50 flex flex-col gap-2 lg:bottom-5">
+        {toasts.map((toast) => {
+          const ok = toast.type === "success";
+          return (
+            <div
+              key={toast.id}
+              role="status"
+              className={`animate-toast-in pointer-events-auto relative flex max-w-[360px] items-center gap-3 overflow-hidden rounded-[4px_14px_4px_14px] border px-4 py-3 text-sm text-white shadow-[0_18px_40px_-14px_rgba(0,0,0,0.8)] backdrop-blur-xl ${
+                ok ? "border-[var(--accent-from)]/40 bg-[var(--glass)]" : "border-[var(--bad)]/50 bg-[#2a0a16]/90"
+              }`}
+            >
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                  ok ? "nex-gradient-bg text-white" : "bg-[var(--bad)] text-white"
+                }`}
+              >
+                {ok ? <Check size={14} strokeWidth={3} /> : <AlertCircle size={14} strokeWidth={3} />}
               </span>
-            ) : (
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-white">
-                !
-              </span>
-            )}
-            {toast.message}
-          </div>
-        ))}
+              <span className="min-w-0 break-words">{toast.message}</span>
+              <span
+                className={`absolute inset-x-0 bottom-0 h-0.5 origin-left ${ok ? "nex-gradient-bg" : "bg-[var(--bad)]"}`}
+                style={{ animation: "nex-drain 4s linear forwards" }}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {confirmState && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in">
-          <div className="w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6 animate-scale-in">
+          <div className="nex-panel w-full max-w-sm p-6 animate-scale-in">
             <p className="text-white">{confirmState.message}</p>
             <div className="mt-5 flex justify-end gap-2">
               <button

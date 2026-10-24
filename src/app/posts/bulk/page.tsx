@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { PageHeader } from "@/components/page-header";
 import { useUi } from "@/components/ui-provider";
 
 interface Account {
@@ -241,12 +242,11 @@ export default function BulkPostPage() {
 
   return (
     <AppShell>
-      <span className="nex-eyebrow">Publicação em massa</span>
-      <h1 className="text-2xl font-semibold">Agendar em lote</h1>
-      <p className="mt-1 text-sm text-[var(--muted)]">
-        Escolha uma conta, suba vários vídeos de uma vez com uma legenda e uma capa únicas — o sistema
-        distribui as datas e horários sozinho, sem repetir horário com nenhum outro vídeo já agendado.
-      </p>
+      <PageHeader
+        eyebrow="Publicação em massa"
+        title="Agendar em lote"
+        subtitle="Suba vários vídeos de uma conta com uma legenda e uma capa. O sistema distribui datas e horários sem repetir nenhum."
+      />
 
       <form onSubmit={handleSubmit} className="mt-6 max-w-2xl space-y-4">
         <div className="space-y-1">

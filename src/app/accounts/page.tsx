@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 import { RowSkeleton } from "@/components/skeleton";
 import { useUi } from "@/components/ui-provider";
 
@@ -154,18 +155,19 @@ function AccountsContent() {
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="nex-eyebrow">Instagram</span>
-          <h1 className="text-2xl font-semibold">Contas conectadas</h1>
-        </div>
-        <a
-          href="/api/instagram/oauth"
-          className="nex-gradient-bg rounded-md px-4 py-2 text-sm font-medium text-white"
-        >
-          Conectar conta do Instagram
-        </a>
-      </div>
+      <PageHeader
+        eyebrow="Instagram"
+        title="Contas conectadas"
+        subtitle="Perfis ligados ao NexSocial, validade do acesso e legenda fixa de cada um."
+        actions={
+          <a
+            href="/api/instagram/oauth"
+            className="nex-gradient-bg rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            Conectar conta do Instagram
+          </a>
+        }
+      />
 
       {loading && (
         <div className="mt-6 space-y-3">

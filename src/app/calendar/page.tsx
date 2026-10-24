@@ -150,10 +150,13 @@ export default function CalendarPage() {
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold capitalize">
-          {format(month, "MMMM yyyy", { locale: ptBR })}
-        </h1>
+      <div className="nex-reveal mb-7 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <span className="nex-eyebrow">Calendário</span>
+          <h1 className="mt-2 text-[30px] font-bold capitalize leading-tight tracking-tight sm:text-[38px]">
+            {format(month, "MMMM yyyy", { locale: ptBR })}
+          </h1>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMonth((m) => subMonths(m, 1))}

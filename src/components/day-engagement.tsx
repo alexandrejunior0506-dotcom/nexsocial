@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Skeleton } from "@/components/skeleton";
+import { CountUp } from "@/components/count-up";
 import { EmptyState } from "@/components/empty-state";
 
 const TZ = "America/Sao_Paulo";
@@ -145,7 +146,8 @@ export function DayEngagement() {
     <section className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-medium">Engajamento por vídeo</h2>
+          <span className="nex-eyebrow">Hoje em números</span>
+          <h2 className="mt-1.5 text-lg font-semibold">Engajamento por vídeo</h2>
           <p className="text-sm text-[var(--muted)]">Vídeos publicados no dia, conta por conta.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -224,7 +226,7 @@ export function DayEngagement() {
             {accounts.map(([id, g]) => {
               const rows = g.posts.map((p) => ({ post: p, v: valuesOf(p) }));
               return (
-                <div key={id} className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                <div key={id} className="nex-card rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
                   <div className="flex items-center gap-3">
                     {g.avatar ? (
                       <Image
@@ -291,9 +293,11 @@ export function DayEngagement() {
 
 function Total({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-      <p className="text-xs text-[var(--muted)]">{label}</p>
-      <p className="nex-gradient-text nex-mono mt-1 text-xl font-semibold">{value.toLocaleString("pt-BR")}</p>
+    <div className="nex-card nex-beam rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3.5">
+      <p className="nex-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">{label}</p>
+      <p className="nex-gradient-text nex-mono mt-1.5 text-xl font-semibold">
+        <CountUp value={value} />
+      </p>
     </div>
   );
 }
